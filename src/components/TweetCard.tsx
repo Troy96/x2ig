@@ -27,7 +27,6 @@ export function TweetCard({
   text,
   authorName,
   authorUsername,
-  authorImage,
   likeCount,
   retweetCount,
   replyCount,
@@ -48,22 +47,22 @@ export function TweetCard({
     <div
       onClick={handleClick}
       className={cn(
-        'relative bg-gray-900 border rounded-xl p-4 transition-all cursor-pointer',
+        'relative theme-card border rounded-xl p-4 transition-all cursor-pointer',
         isSelected
-          ? 'border-purple-500 ring-2 ring-purple-500/20'
-          : 'border-gray-800 hover:border-gray-700',
+          ? 'border-[var(--accent)] ring-2 ring-[var(--accent-muted)]'
+          : 'hover:border-[var(--muted)]',
         isPosted && 'opacity-60 cursor-default'
       )}
     >
       {isPosted && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 text-green-500 text-xs font-medium">
+        <div className="absolute top-3 right-3 flex items-center gap-1 text-[var(--success-text)] text-xs font-medium">
           <CheckCircle className="w-4 h-4" />
           Posted
         </div>
       )}
 
       {isSelected && !isPosted && (
-        <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
+        <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[var(--accent)] flex items-center justify-center">
           <svg
             className="w-3 h-3 text-white"
             fill="none"
@@ -82,11 +81,11 @@ export function TweetCard({
 
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <span className="font-semibold text-white text-sm">{authorName}</span>
-          <span className="text-gray-500 text-sm">@{authorUsername}</span>
+          <span className="font-semibold text-sm">{authorName}</span>
+          <span className="theme-muted text-sm">@{authorUsername}</span>
         </div>
 
-          <p className="mt-1 text-gray-300 whitespace-pre-wrap break-words">
+          <p className="mt-1 whitespace-pre-wrap break-words opacity-90">
             {text}
           </p>
 
@@ -95,7 +94,7 @@ export function TweetCard({
               {mediaUrls.slice(0, 4).map((url, index) => (
                 <div
                   key={index}
-                  className="relative aspect-video rounded-lg overflow-hidden bg-gray-800"
+                  className="relative aspect-video rounded-lg overflow-hidden bg-[var(--card-border)]"
                 >
                   <Image
                     src={url}
@@ -108,7 +107,7 @@ export function TweetCard({
             </div>
           )}
 
-          <div className="mt-3 flex items-center gap-4 text-gray-500 text-sm">
+          <div className="mt-3 flex items-center gap-4 theme-muted text-sm">
             <span className="flex items-center gap-1">
               <MessageCircle className="w-4 h-4" />
               {replyCount}
@@ -132,7 +131,7 @@ export function TweetCard({
               e.stopPropagation()
               onSchedule(id)
             }}
-            className="mt-3 flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+            className="mt-3 flex items-center gap-2 text-sm theme-accent-text hover:opacity-80 transition-opacity"
           >
             <Calendar className="w-4 h-4" />
             Schedule

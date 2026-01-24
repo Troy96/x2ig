@@ -4,11 +4,13 @@ import { useSession, signOut } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
-import { Bell, Mail, LogOut, Trash2, RefreshCw } from 'lucide-react'
+import { Bell, Mail, LogOut, Trash2, RefreshCw, Palette, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTheme, themes, Theme } from '@/contexts/ThemeContext'
 
 export default function SettingsPage() {
   const { data: session, status } = useSession()
+  const { theme, setTheme } = useTheme()
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushSupported, setPushSupported] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -68,8 +70,8 @@ export default function SettingsPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen theme-bg flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
       </div>
     )
   }
@@ -79,25 +81,68 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen theme-bg theme-fg">
       <Header />
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-2xl font-bold mb-8">Settings</h1>
 
+        {/* Appearance Section */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold theme-muted mb-4">Appearance</h2>
+
+          <div className="p-4 theme-card rounded-xl border">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg theme-accent-muted flex items-center justify-center">
+                <Palette className="w-5 h-5 theme-accent-text" />
+              </div>
+              <div>
+                <h3 className="font-medium">Theme</h3>
+                <p className="text-sm theme-muted">
+                  Choose your preferred appearance
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              {themes.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTheme(t.id)}
+                  className={cn(
+                    'relative p-3 rounded-lg border-2 transition-all text-left',
+                    theme === t.id
+                      ? 'border-[var(--accent)] bg-[var(--accent-muted)]'
+                      : 'border-[var(--card-border)] hover:border-[var(--muted)]'
+                  )}
+                >
+                  {theme === t.id && (
+                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  <ThemePreview themeId={t.id} />
+                  <p className="font-medium text-sm mt-2">{t.name}</p>
+                  <p className="text-xs theme-muted">{t.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Notifications Section */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-300 mb-4">Notifications</h2>
+          <h2 className="text-lg font-semibold theme-muted mb-4">Notifications</h2>
 
           <div className="space-y-4">
             {/* Push Notifications */}
-            <div className="flex items-center justify-between p-4 bg-gray-900 rounded-xl border border-gray-800">
+            <div className="flex items-center justify-between p-4 theme-card rounded-xl border">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-purple-400" />
+                <div className="w-10 h-10 rounded-lg theme-accent-muted flex items-center justify-center">
+                  <Bell className="w-5 h-5 theme-accent-text" />
                 </div>
                 <div>
                   <h3 className="font-medium">Push Notifications</h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm theme-muted">
                     Get notified when your screenshots are ready
                   </p>
                 </div>
@@ -109,8 +154,8 @@ export default function SettingsPage() {
                   className={cn(
                     'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                     pushEnabled
-                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                      : 'bg-purple-600 text-white hover:bg-purple-700',
+                      ? 'bg-[var(--card-border)] hover:opacity-80'
+                      : 'bg-[var(--accent)] text-white hover:opacity-90',
                     loading && 'opacity-50 cursor-not-allowed'
                   )}
                 >
@@ -123,24 +168,24 @@ export default function SettingsPage() {
                   )}
                 </button>
               ) : (
-                <span className="text-sm text-gray-500">Not supported</span>
+                <span className="text-sm theme-muted">Not supported</span>
               )}
             </div>
 
             {/* Email Notifications */}
-            <div className="flex items-center justify-between p-4 bg-gray-900 rounded-xl border border-gray-800">
+            <div className="flex items-center justify-between p-4 theme-card rounded-xl border">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-blue-400" />
+                <div className="w-10 h-10 rounded-lg bg-[var(--info-muted)] flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-[var(--info-text)]" />
                 </div>
                 <div>
                   <h3 className="font-medium">Email Notifications</h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm theme-muted">
                     {session.user.email || 'No email connected'}
                   </p>
                 </div>
               </div>
-              <span className="px-3 py-1 bg-green-600/20 text-green-400 text-sm rounded-full">
+              <span className="px-3 py-1 bg-[var(--success-muted)] text-[var(--success-text)] text-sm rounded-full">
                 Enabled
               </span>
             </div>
@@ -149,25 +194,25 @@ export default function SettingsPage() {
 
         {/* Account Section */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-300 mb-4">Account</h2>
+          <h2 className="text-lg font-semibold theme-muted mb-4">Account</h2>
 
           <div className="space-y-4">
             {/* Connected X Account */}
-            <div className="flex items-center justify-between p-4 bg-gray-900 rounded-xl border border-gray-800">
+            <div className="flex items-center justify-between p-4 theme-card rounded-xl border">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-[var(--card-border)] flex items-center justify-center">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
                 </div>
                 <div>
                   <h3 className="font-medium">X Account</h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm theme-muted">
                     @{session.user.xUsername || 'Not connected'}
                   </p>
                 </div>
               </div>
-              <span className="px-3 py-1 bg-green-600/20 text-green-400 text-sm rounded-full">
+              <span className="px-3 py-1 bg-[var(--success-muted)] text-[var(--success-text)] text-sm rounded-full">
                 Connected
               </span>
             </div>
@@ -175,17 +220,17 @@ export default function SettingsPage() {
             {/* Sign Out */}
             <button
               onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-              className="w-full flex items-center justify-between p-4 bg-gray-900 rounded-xl border border-gray-800 hover:border-red-900 transition-colors group"
+              className="w-full flex items-center justify-between p-4 theme-card rounded-xl border hover:border-[var(--danger)] transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-red-600/20 flex items-center justify-center">
-                  <LogOut className="w-5 h-5 text-red-400" />
+                <div className="w-10 h-10 rounded-lg bg-[var(--danger-muted)] flex items-center justify-center">
+                  <LogOut className="w-5 h-5 text-[var(--danger-text)]" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-medium group-hover:text-red-400 transition-colors">
+                  <h3 className="font-medium group-hover:text-[var(--danger-text)] transition-colors">
                     Sign Out
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm theme-muted">
                     Sign out of your account
                   </p>
                 </div>
@@ -196,28 +241,54 @@ export default function SettingsPage() {
 
         {/* Danger Zone */}
         <section>
-          <h2 className="text-lg font-semibold text-red-400 mb-4">Danger Zone</h2>
+          <h2 className="text-lg font-semibold text-[var(--danger-text)] mb-4">Danger Zone</h2>
 
-          <div className="p-4 bg-red-950/20 rounded-xl border border-red-900/50">
+          <div className="p-4 bg-[var(--danger-muted)] rounded-xl border border-[var(--danger)]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-red-600/20 flex items-center justify-center">
-                  <Trash2 className="w-5 h-5 text-red-400" />
+                <div className="w-10 h-10 rounded-lg bg-[var(--danger-muted)] flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-[var(--danger-text)]" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-red-400">Delete Account</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="font-medium text-[var(--danger-text)]">Delete Account</h3>
+                  <p className="text-sm theme-muted">
                     Permanently delete your account and all data
                   </p>
                 </div>
               </div>
-              <button className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
+              <button className="px-4 py-2 bg-[var(--danger)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
                 Delete
               </button>
             </div>
           </div>
         </section>
       </main>
+    </div>
+  )
+}
+
+function ThemePreview({ themeId }: { themeId: Theme }) {
+  const previewStyles: Record<Theme, { bg: string; card: string; accent: string }> = {
+    midnight: { bg: '#0a0a0a', card: '#111111', accent: '#9333ea' },
+    daylight: { bg: '#ffffff', card: '#f5f5f5', accent: '#7c3aed' },
+    paper: { bg: '#faf9f7', card: '#ffffff', accent: '#78716c' },
+  }
+
+  const style = previewStyles[themeId]
+
+  return (
+    <div
+      className="w-full h-12 rounded-md overflow-hidden flex items-end p-1 gap-1"
+      style={{ backgroundColor: style.bg }}
+    >
+      <div
+        className="flex-1 h-6 rounded-sm"
+        style={{ backgroundColor: style.card }}
+      />
+      <div
+        className="w-4 h-8 rounded-sm"
+        style={{ backgroundColor: style.accent }}
+      />
     </div>
   )
 }

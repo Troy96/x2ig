@@ -17,8 +17,8 @@ export default function NotificationsPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen theme-bg flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
       </div>
     )
   }
@@ -28,7 +28,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen theme-bg theme-fg">
       <Header />
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <NotificationHistory />

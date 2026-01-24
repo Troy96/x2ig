@@ -102,7 +102,7 @@ export function TweetList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
       </div>
     )
   }
@@ -111,7 +111,7 @@ export function TweetList() {
     <div>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        <div className="flex items-center gap-2 bg-gray-900 rounded-lg p-1">
+        <div className="flex items-center gap-2 theme-card rounded-lg p-1 border">
           {(['all', 'unposted', 'posted'] as FilterType[]).map((f) => (
             <button
               key={f}
@@ -119,8 +119,8 @@ export function TweetList() {
               className={cn(
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                 filter === f
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-[var(--accent)] text-white'
+                  : 'theme-muted hover:theme-fg'
               )}
             >
               {f === 'all' && 'All'}
@@ -133,7 +133,7 @@ export function TweetList() {
         <button
           onClick={() => fetchTweets(true)}
           disabled={refreshing}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm theme-muted hover:theme-fg transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
           Refresh
@@ -143,7 +143,7 @@ export function TweetList() {
           <>
             <button
               onClick={handleSelectAll}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm theme-muted hover:theme-fg transition-colors"
             >
               {selectedIds.size === unpostedCount ? 'Deselect All' : 'Select All'}
             </button>
@@ -151,7 +151,7 @@ export function TweetList() {
             {selectedIds.size > 0 && (
               <button
                 onClick={handleBulkSchedule}
-                className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors ml-auto"
+                className="flex items-center gap-2 px-4 py-1.5 bg-[var(--accent)] hover:opacity-90 text-white text-sm font-medium rounded-lg transition-opacity ml-auto"
               >
                 <Calendar className="w-4 h-4" />
                 Schedule {selectedIds.size} Tweet{selectedIds.size > 1 ? 's' : ''}
@@ -164,10 +164,10 @@ export function TweetList() {
       {/* Tweet Grid */}
       {tweets.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">No tweets found</p>
+          <p className="theme-muted">No tweets found</p>
           <button
             onClick={() => fetchTweets(true)}
-            className="mt-4 text-purple-400 hover:text-purple-300"
+            className="mt-4 theme-accent-text hover:opacity-80"
           >
             Refresh to fetch tweets
           </button>

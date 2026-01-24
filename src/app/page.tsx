@@ -17,8 +17,8 @@ export default function Dashboard() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen theme-bg flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
       </div>
     )
   }
@@ -28,12 +28,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen theme-bg theme-fg">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold mb-2">Your Tweets</h1>
-          <p className="text-gray-400">
+          <p className="theme-muted">
             Select tweets to convert into Instagram story images
           </p>
         </div>

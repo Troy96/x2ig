@@ -97,20 +97,20 @@ export function NotificationHistory() {
   const getIcon = (type: Notification['type']) => {
     switch (type) {
       case 'POST_READY':
-        return <CheckCircle className="w-5 h-5 text-green-500" />
+        return <CheckCircle className="w-5 h-5 text-[var(--success-text)]" />
       case 'POST_FAILED':
-        return <XCircle className="w-5 h-5 text-red-500" />
+        return <XCircle className="w-5 h-5 text-[var(--danger-text)]" />
       case 'REMINDER':
-        return <Bell className="w-5 h-5 text-blue-500" />
+        return <Bell className="w-5 h-5 text-[var(--info-text)]" />
       default:
-        return <Bell className="w-5 h-5 text-gray-500" />
+        return <Bell className="w-5 h-5 theme-muted" />
     }
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--accent)]"></div>
       </div>
     )
   }
@@ -120,9 +120,9 @@ export function NotificationHistory() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold text-white">Notifications</h2>
+          <h2 className="text-xl font-semibold">Notifications</h2>
           {unreadCount > 0 && (
-            <span className="px-2 py-0.5 bg-purple-600 text-white text-xs font-medium rounded-full">
+            <span className="px-2 py-0.5 bg-[var(--accent)] text-white text-xs font-medium rounded-full">
               {unreadCount} new
             </span>
           )}
@@ -130,14 +130,14 @@ export function NotificationHistory() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchNotifications}
-            className="p-2 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-white"
+            className="p-2 rounded-lg hover:bg-[var(--card-border)] transition-colors theme-muted hover:theme-fg"
           >
             <RefreshCw className="w-5 h-5" />
           </button>
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm theme-accent-text hover:opacity-80 transition-opacity"
             >
               <Check className="w-4 h-4" />
               Mark all as read
@@ -149,8 +149,8 @@ export function NotificationHistory() {
       {/* Notification List */}
       {notifications.length === 0 ? (
         <div className="text-center py-12">
-          <Bell className="w-12 h-12 mx-auto text-gray-700 mb-3" />
-          <p className="text-gray-500">No notifications yet</p>
+          <Bell className="w-12 h-12 mx-auto theme-muted mb-3 opacity-50" />
+          <p className="theme-muted">No notifications yet</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -160,8 +160,8 @@ export function NotificationHistory() {
               className={cn(
                 'flex gap-4 p-4 rounded-xl border transition-colors',
                 notification.read
-                  ? 'bg-gray-900/30 border-gray-800'
-                  : 'bg-gray-900 border-gray-700'
+                  ? 'bg-[var(--card)] opacity-70 border-[var(--card-border)]'
+                  : 'theme-card border-[var(--muted)]'
               )}
             >
               {/* Icon */}
@@ -175,14 +175,14 @@ export function NotificationHistory() {
                   <div>
                     <h3 className={cn(
                       'font-medium',
-                      notification.read ? 'text-gray-400' : 'text-white'
+                      notification.read && 'theme-muted'
                     )}>
                       {notification.title}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm theme-muted mt-1">
                       {notification.body}
                     </p>
-                    <p className="text-xs text-gray-600 mt-2">
+                    <p className="text-xs theme-muted mt-2 opacity-60">
                       {formatDate(new Date(notification.sentAt))}
                     </p>
                   </div>
@@ -205,7 +205,7 @@ export function NotificationHistory() {
                   {!notification.read && (
                     <button
                       onClick={() => markAsRead([notification.id])}
-                      className="text-xs text-purple-400 hover:text-purple-300"
+                      className="text-xs theme-accent-text hover:opacity-80"
                     >
                       Mark as read
                     </button>
@@ -215,14 +215,14 @@ export function NotificationHistory() {
                       href={notification.imageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-blue-400 hover:text-blue-300"
+                      className="text-xs text-[var(--info-text)] hover:opacity-80"
                     >
                       View image
                     </a>
                   )}
                   <button
                     onClick={() => deleteNotification(notification.id)}
-                    className="text-xs text-gray-500 hover:text-red-400 ml-auto"
+                    className="text-xs theme-muted hover:text-[var(--danger-text)] ml-auto"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
