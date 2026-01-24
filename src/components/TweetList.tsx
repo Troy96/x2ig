@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { RefreshCw, Calendar } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { RefreshCw, Calendar, ArrowUpDown, Heart, MessageCircle, Repeat2, Clock } from 'lucide-react'
 import { TweetCard } from './TweetCard'
 import { ScheduleModal } from './ScheduleModal'
 import { BulkScheduleModal } from './BulkScheduleModal'
@@ -23,12 +23,23 @@ interface Tweet {
 }
 
 type FilterType = 'all' | 'posted' | 'unposted'
+type SortField = 'date' | 'likes' | 'retweets' | 'replies'
+type SortOrder = 'asc' | 'desc'
+
+const sortOptions: { field: SortField; label: string; icon: React.ReactNode }[] = [
+  { field: 'date', label: 'Date', icon: <Clock className="w-3.5 h-3.5" /> },
+  { field: 'likes', label: 'Likes', icon: <Heart className="w-3.5 h-3.5" /> },
+  { field: 'retweets', label: 'Retweets', icon: <Repeat2 className="w-3.5 h-3.5" /> },
+  { field: 'replies', label: 'Replies', icon: <MessageCircle className="w-3.5 h-3.5" /> },
+]
 
 export function TweetList() {
   const [tweets, setTweets] = useState<Tweet[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [filter, setFilter] = useState<FilterType>('unposted')
+  const [sortField, setSortField] = useState<SortField>('date')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [scheduleModalTweet, setScheduleModalTweet] = useState<Tweet | null>(null)
   const [showBulkSchedule, setShowBulkSchedule] = useState(false)
@@ -61,6 +72,37 @@ export function TweetList() {
   useEffect(() => {
     fetchTweets()
   }, [fetchTweets])
+
+  const sortedTweets = useMemo(() => {
+    const sorted = [...tweets].sort((a, b) => {
+      let comparison = 0
+      switch (sortField) {
+        case 'date':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          break
+        case 'likes':
+          comparison = a.likeCount - b.likeCount
+          break
+        case 'retweets':
+          comparison = a.retweetCount - b.retweetCount
+          break
+        case 'replies':
+          comparison = a.replyCount - b.replyCount
+          break
+      }
+      return sortOrder === 'desc' ? -comparison : comparison
+    })
+    return sorted
+  }, [tweets, sortField, sortOrder])
+
+  const handleSortClick = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')
+    } else {
+      setSortField(field)
+      setSortOrder('desc')
+    }
+  }
 
   const handleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -111,6 +153,7 @@ export function TweetList() {
     <div>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
+        {/* Filter Tabs */}
         <div className="flex items-center gap-2 theme-card rounded-lg p-1 border">
           {(['all', 'unposted', 'posted'] as FilterType[]).map((f) => (
             <button
@@ -126,6 +169,35 @@ export function TweetList() {
               {f === 'all' && 'All'}
               {f === 'unposted' && 'Unposted'}
               {f === 'posted' && 'Posted'}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort Options */}
+        <div className="flex items-center gap-1 theme-card rounded-lg p-1 border">
+          <span className="px-2 text-xs theme-muted flex items-center gap-1">
+            <ArrowUpDown className="w-3 h-3" />
+            Sort
+          </span>
+          {sortOptions.map((option) => (
+            <button
+              key={option.field}
+              onClick={() => handleSortClick(option.field)}
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors',
+                sortField === option.field
+                  ? 'bg-[var(--accent)] text-white'
+                  : 'theme-muted hover:theme-fg'
+              )}
+              title={`Sort by ${option.label} (${sortField === option.field ? (sortOrder === 'desc' ? 'high to low' : 'low to high') : 'click to sort'})`}
+            >
+              {option.icon}
+              <span className="hidden sm:inline">{option.label}</span>
+              {sortField === option.field && (
+                <span className="text-xs opacity-75">
+                  {sortOrder === 'desc' ? '↓' : '↑'}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -162,7 +234,7 @@ export function TweetList() {
       </div>
 
       {/* Tweet Grid */}
-      {tweets.length === 0 ? (
+      {sortedTweets.length === 0 ? (
         <div className="text-center py-12">
           <p className="theme-muted">No tweets found</p>
           <button
@@ -174,7 +246,7 @@ export function TweetList() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {tweets.map((tweet) => (
+          {sortedTweets.map((tweet) => (
             <TweetCard
               key={tweet.id}
               {...tweet}

@@ -37,47 +37,69 @@ export interface TweetData {
 
 export async function fetchUserTweets(
   userId: string,
-  maxResults: number = 50
+  maxTweets: number = 200
 ): Promise<TweetData[]> {
   try {
-    const tweets = await twitterClient.v2.userTimeline(userId, {
-      max_results: maxResults,
-      'tweet.fields': ['created_at', 'public_metrics', 'attachments'],
-      'user.fields': ['name', 'username', 'profile_image_url'],
-      expansions: ['author_id', 'attachments.media_keys'],
-      'media.fields': ['url', 'preview_image_url', 'type'],
-      exclude: ['retweets', 'replies'],
-    })
+    const allTweets: TweetData[] = []
+    let paginationToken: string | undefined = undefined
+    const perPage = 100 // Max allowed by Twitter API
 
-    const users = tweets.includes?.users || []
-    const media = tweets.includes?.media || []
+    // Paginate through tweets until we reach maxTweets or run out
+    while (allTweets.length < maxTweets) {
+      const tweets = await twitterClient.v2.userTimeline(userId, {
+        max_results: Math.min(perPage, maxTweets - allTweets.length),
+        'tweet.fields': ['created_at', 'public_metrics', 'attachments'],
+        'user.fields': ['name', 'username', 'profile_image_url'],
+        expansions: ['author_id', 'attachments.media_keys'],
+        'media.fields': ['url', 'preview_image_url', 'type'],
+        exclude: ['retweets', 'replies'],
+        ...(paginationToken && { pagination_token: paginationToken }),
+      })
 
-    return tweets.data.data.map((tweet) => {
-      const author = users.find((u) => u.id === tweet.author_id) || {
-        id: tweet.author_id || '',
-        name: 'Unknown',
-        username: 'unknown',
+      if (!tweets.data?.data?.length) {
+        break // No more tweets
       }
 
-      const tweetMedia = tweet.attachments?.media_keys
-        ?.map((key) => media.find((m) => m.media_key === key))
-        .filter(Boolean) as TweetData['media']
+      const users = tweets.includes?.users || []
+      const media = tweets.includes?.media || []
 
-      return {
-        id: tweet.id,
-        text: tweet.text,
-        created_at: tweet.created_at || new Date().toISOString(),
-        author: {
-          id: author.id,
-          name: author.name,
-          username: author.username,
-          profile_image_url: author.profile_image_url,
-        },
-        public_metrics: tweet.public_metrics,
-        attachments: tweet.attachments,
-        media: tweetMedia,
+      const pageTweets = tweets.data.data.map((tweet) => {
+        const author = users.find((u) => u.id === tweet.author_id) || {
+          id: tweet.author_id || '',
+          name: 'Unknown',
+          username: 'unknown',
+        }
+
+        const tweetMedia = tweet.attachments?.media_keys
+          ?.map((key) => media.find((m) => m.media_key === key))
+          .filter(Boolean) as TweetData['media']
+
+        return {
+          id: tweet.id,
+          text: tweet.text,
+          created_at: tweet.created_at || new Date().toISOString(),
+          author: {
+            id: author.id,
+            name: author.name,
+            username: author.username,
+            profile_image_url: author.profile_image_url,
+          },
+          public_metrics: tweet.public_metrics,
+          attachments: tweet.attachments,
+          media: tweetMedia,
+        }
+      })
+
+      allTweets.push(...pageTweets)
+
+      // Check if there's more pages
+      paginationToken = tweets.data.meta?.next_token
+      if (!paginationToken) {
+        break // No more pages
       }
-    })
+    }
+
+    return allTweets
   } catch (error) {
     console.error('Error fetching tweets:', error)
     throw error

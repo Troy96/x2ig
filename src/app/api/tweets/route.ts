@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
     let tweets = existingTweets
 
     if (shouldRefresh) {
-      // Fetch fresh tweets from X API
-      const freshTweets = await fetchUserTweets(user.xUserId, 50)
+      // Fetch fresh tweets from X API (up to 200 with pagination)
+      const freshTweets = await fetchUserTweets(user.xUserId, 200)
 
       // Upsert tweets to database
       for (const tweet of freshTweets) {
