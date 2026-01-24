@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { RefreshCw, Calendar, ArrowUpDown, Heart, MessageCircle, Repeat2, Clock } from 'lucide-react'
+import { RefreshCw, Calendar, ArrowUpDown, Heart, MessageCircle, Repeat2, Clock, Search, X } from 'lucide-react'
 import { TweetCard } from './TweetCard'
 import { ScheduleModal } from './ScheduleModal'
 import { BulkScheduleModal } from './BulkScheduleModal'
@@ -40,6 +40,7 @@ export function TweetList() {
   const [filter, setFilter] = useState<FilterType>('unposted')
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [searchQuery, setSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [scheduleModalTweet, setScheduleModalTweet] = useState<Tweet | null>(null)
   const [showBulkSchedule, setShowBulkSchedule] = useState(false)
@@ -73,8 +74,21 @@ export function TweetList() {
     fetchTweets()
   }, [fetchTweets])
 
-  const sortedTweets = useMemo(() => {
-    const sorted = [...tweets].sort((a, b) => {
+  const filteredAndSortedTweets = useMemo(() => {
+    // First filter by search query
+    let filtered = tweets
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = tweets.filter(
+        (t) =>
+          t.text.toLowerCase().includes(query) ||
+          t.authorName.toLowerCase().includes(query) ||
+          t.authorUsername.toLowerCase().includes(query)
+      )
+    }
+
+    // Then sort
+    const sorted = [...filtered].sort((a, b) => {
       let comparison = 0
       switch (sortField) {
         case 'date':
@@ -93,7 +107,7 @@ export function TweetList() {
       return sortOrder === 'desc' ? -comparison : comparison
     })
     return sorted
-  }, [tweets, sortField, sortOrder])
+  }, [tweets, sortField, sortOrder, searchQuery])
 
   const handleSortClick = (field: SortField) => {
     if (sortField === field) {
@@ -151,6 +165,26 @@ export function TweetList() {
 
   return (
     <div>
+      {/* Search Bar */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 theme-muted" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search tweets..."
+          className="w-full pl-10 pr-10 py-2.5 bg-[var(--card)] border border-[var(--card-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] text-sm"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-[var(--card-border)] theme-muted"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         {/* Filter Tabs */}
@@ -234,7 +268,7 @@ export function TweetList() {
       </div>
 
       {/* Tweet Grid */}
-      {sortedTweets.length === 0 ? (
+      {filteredAndSortedTweets.length === 0 ? (
         <div className="text-center py-12">
           <p className="theme-muted">No tweets found</p>
           <button
@@ -246,7 +280,7 @@ export function TweetList() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {sortedTweets.map((tweet) => (
+          {filteredAndSortedTweets.map((tweet) => (
             <TweetCard
               key={tweet.id}
               {...tweet}

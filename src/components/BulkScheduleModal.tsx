@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { X, Clock, Palette, Loader2 } from 'lucide-react'
-import { cn, getDefaultTheme, formatDate } from '@/lib/utils'
+import { X, Clock, Palette, Loader2, Sparkles } from 'lucide-react'
+import { cn, formatDate } from '@/lib/utils'
+import { useStoryTheme, storyThemes, StoryTheme } from '@/contexts/StoryThemeContext'
 
 interface Tweet {
   id: string
@@ -23,17 +24,19 @@ interface BulkScheduleModalProps {
 interface ScheduleSlot {
   date: string
   time: string
-  theme: 'SHINY_PURPLE' | 'MANGO_JUICE' | 'auto'
+  theme: StoryTheme | 'auto'
   tweetId: string
 }
 
-type Theme = 'SHINY_PURPLE' | 'MANGO_JUICE' | 'auto'
-
 export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkScheduleModalProps) {
+  const { getThemeForDate } = useStoryTheme()
   const [slots, setSlots] = useState<ScheduleSlot[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [globalTheme, setGlobalTheme] = useState<Theme>('auto')
+  const [globalTheme, setGlobalTheme] = useState<StoryTheme | 'auto'>('auto')
+  const [preview, setPreview] = useState<string | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const [previewIndex, setPreviewIndex] = useState(0)
 
   // Initialize slots with default times (30 min apart starting tomorrow at 10am)
   useEffect(() => {
@@ -90,10 +93,10 @@ export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkSchedule
     )
   }
 
-  const getEffectiveTheme = (slot: ScheduleSlot): 'SHINY_PURPLE' | 'MANGO_JUICE' => {
+  const getEffectiveTheme = (slot: ScheduleSlot): StoryTheme => {
     if (slot.theme !== 'auto') return slot.theme
     const scheduledDate = new Date(`${slot.date}T${slot.time}`)
-    return getDefaultTheme(scheduledDate)
+    return getThemeForDate(scheduledDate)
   }
 
   const handleSchedule = async () => {
@@ -113,13 +116,14 @@ export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkSchedule
       // Schedule each post individually with its own time
       for (const slot of slots) {
         const scheduledDate = new Date(`${slot.date}T${slot.time}`)
+        const effectiveTheme = getEffectiveTheme(slot)
         const response = await fetch('/api/schedule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             tweets: [slot.tweetId],
             scheduledFor: scheduledDate.toISOString(),
-            theme: slot.theme === 'auto' ? undefined : slot.theme,
+            theme: effectiveTheme,
           }),
         })
 
@@ -139,6 +143,46 @@ export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkSchedule
   }
 
   const getTweetById = (tweetId: string) => tweets.find((t) => t.id === tweetId)
+
+  const handleGeneratePreview = async () => {
+    if (slots.length === 0) return
+
+    setLoadingPreview(true)
+    setError(null)
+
+    try {
+      const slot = slots[previewIndex]
+      const response = await fetch('/api/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tweetId: slot.tweetId,
+          theme: getEffectiveTheme(slot),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate preview')
+      }
+
+      setPreview(data.preview)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate preview')
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
+
+  // Clear preview when slots change
+  useEffect(() => {
+    setPreview(null)
+  }, [slots, previewIndex])
+
+  const previewSlot = slots[previewIndex]
+  const previewTheme = previewSlot ? getEffectiveTheme(previewSlot) : 'SHINY_PURPLE'
+  const previewThemeData = storyThemes.find(t => t.id === previewTheme)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -163,12 +207,13 @@ export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkSchedule
               <Palette className="w-4 h-4 theme-muted" />
               <select
                 value={globalTheme}
-                onChange={(e) => setGlobalTheme(e.target.value as Theme)}
+                onChange={(e) => setGlobalTheme(e.target.value as StoryTheme | 'auto')}
                 className="bg-[var(--card)] border border-[var(--card-border)] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
                 <option value="auto">Auto Theme</option>
-                <option value="SHINY_PURPLE">Shiny Purple</option>
-                <option value="MANGO_JUICE">Mango Juice</option>
+                {storyThemes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
               </select>
               <button
                 onClick={applyGlobalTheme}
@@ -192,6 +237,9 @@ export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkSchedule
             {slots.map((slot, index) => {
               const tweet = getTweetById(slot.tweetId)
               if (!tweet) return null
+
+              const effectiveTheme = getEffectiveTheme(slot)
+              const themeData = storyThemes.find(t => t.id === effectiveTheme)
 
               return (
                 <div
@@ -252,13 +300,70 @@ export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkSchedule
                       className="bg-[var(--card)] border border-[var(--card-border)] rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                     >
                       <option value="auto">Auto</option>
-                      <option value="SHINY_PURPLE">Purple</option>
-                      <option value="MANGO_JUICE">Mango</option>
+                      {storyThemes.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
               )
             })}
+          </div>
+
+          {/* Story Preview */}
+          <div className="bg-[var(--background)] rounded-xl p-4 border border-[var(--card-border)]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">Story Preview</span>
+                <select
+                  value={previewIndex}
+                  onChange={(e) => setPreviewIndex(Number(e.target.value))}
+                  className="bg-[var(--card)] border border-[var(--card-border)] rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                >
+                  {tweets.map((t, i) => (
+                    <option key={t.id} value={i}>Tweet #{i + 1}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleGeneratePreview}
+                disabled={loadingPreview}
+                className="flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)] text-white text-sm rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {loadingPreview ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generate
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="aspect-square max-w-[280px] mx-auto bg-[var(--card)] border border-[var(--card-border)] rounded-xl overflow-hidden flex items-center justify-center">
+              {preview ? (
+                <Image
+                  src={preview}
+                  alt="Preview"
+                  width={280}
+                  height={280}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="text-center p-4">
+                  <div
+                    className="w-16 h-16 rounded-lg mx-auto mb-3 opacity-50"
+                    style={{ background: previewThemeData?.gradient || storyThemes[0].gradient }}
+                  />
+                  <span className="theme-muted text-sm">
+                    Click Generate to preview
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Summary */}
@@ -267,16 +372,13 @@ export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkSchedule
             <div className="flex flex-wrap gap-2">
               {slots.map((slot, index) => {
                 const scheduledDate = new Date(`${slot.date}T${slot.time}`)
-                const theme = getEffectiveTheme(slot)
+                const effectiveTheme = getEffectiveTheme(slot)
+                const themeData = storyThemes.find(t => t.id === effectiveTheme)
                 return (
                   <span
                     key={slot.tweetId}
-                    className={cn(
-                      'px-3 py-1 rounded-full text-xs font-medium',
-                      theme === 'SHINY_PURPLE'
-                        ? 'bg-purple-500/20 text-purple-400'
-                        : 'bg-orange-500/20 text-orange-400'
-                    )}
+                    className="px-3 py-1 rounded-full text-xs font-medium text-white"
+                    style={{ background: themeData?.gradient || storyThemes[0].gradient }}
                   >
                     #{index + 1}: {formatDate(scheduledDate)}
                   </span>

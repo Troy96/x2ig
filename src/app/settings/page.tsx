@@ -4,13 +4,15 @@ import { useSession, signOut } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
-import { Bell, Mail, LogOut, Trash2, RefreshCw, Palette, Check } from 'lucide-react'
+import { Bell, Mail, LogOut, Trash2, RefreshCw, Palette, Check, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme, themes, Theme } from '@/contexts/ThemeContext'
+import { useStoryTheme, storyThemes, daysOfWeek, DayOfWeek, StoryTheme } from '@/contexts/StoryThemeContext'
 
 export default function SettingsPage() {
   const { data: session, status } = useSession()
   const { theme, setTheme } = useTheme()
+  const { dayThemeMapping, setDayTheme } = useStoryTheme()
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushSupported, setPushSupported] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -125,6 +127,71 @@ export default function SettingsPage() {
                   <p className="text-xs theme-muted">{t.description}</p>
                 </button>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Story Themes Section */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold theme-muted mb-4">Story Themes</h2>
+
+          <div className="p-4 theme-card rounded-xl border">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg theme-accent-muted flex items-center justify-center">
+                <Sparkles className="w-5 h-5 theme-accent-text" />
+              </div>
+              <div>
+                <h3 className="font-medium">Auto Theme Schedule</h3>
+                <p className="text-sm theme-muted">
+                  Set which theme to use for each day of the week
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {daysOfWeek.map((day) => (
+                <div key={day.id} className="flex items-center justify-between py-2">
+                  <span className="text-sm font-medium w-24">{day.label}</span>
+                  <div className="flex-1 flex gap-2 justify-end">
+                    {storyThemes.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => setDayTheme(day.id, t.id)}
+                        className={cn(
+                          'relative w-10 h-8 rounded-md transition-all',
+                          dayThemeMapping[day.id] === t.id
+                            ? 'ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--card)]'
+                            : 'opacity-50 hover:opacity-75'
+                        )}
+                        style={{ background: t.gradient }}
+                        title={t.name}
+                      >
+                        {dayThemeMapping[day.id] === t.id && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Check className="w-4 h-4 text-white drop-shadow-md" />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Theme Legend */}
+            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+              <p className="text-xs theme-muted mb-2">Available themes:</p>
+              <div className="flex flex-wrap gap-2">
+                {storyThemes.map((t) => (
+                  <div key={t.id} className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ background: t.gradient }}
+                    />
+                    <span className="text-xs theme-muted">{t.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>

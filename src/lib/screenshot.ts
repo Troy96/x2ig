@@ -1,7 +1,15 @@
 import { chromium, Browser } from 'playwright'
 import sharp from 'sharp'
 
-export type Theme = 'SHINY_PURPLE' | 'MANGO_JUICE'
+export type Theme = 'SHINY_PURPLE' | 'MANGO_JUICE' | 'OCEAN_BREEZE' | 'FOREST_GLOW' | 'SUNSET_VIBES'
+
+const themeGradients: Record<Theme, string> = {
+  SHINY_PURPLE: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  MANGO_JUICE: 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #f9a825 100%)',
+  OCEAN_BREEZE: 'linear-gradient(135deg, #667eea 0%, #64b5f6 50%, #4dd0e1 100%)',
+  FOREST_GLOW: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)',
+  SUNSET_VIBES: 'linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%)',
+}
 
 // Output dimensions: Square for Instagram
 const OUTPUT_SIZE = 1080
@@ -47,9 +55,7 @@ export interface TweetData {
 
 // Generate tweet card HTML
 function generateTweetCardHtml(tweet: TweetData, theme: Theme): string {
-  const gradient = theme === 'SHINY_PURPLE'
-    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    : 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #f9a825 100%)'
+  const gradient = themeGradients[theme] || themeGradients.SHINY_PURPLE
 
   const formattedDate = tweet.createdAt
     ? new Date(tweet.createdAt).toLocaleDateString('en-US', {
