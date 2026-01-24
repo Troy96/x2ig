@@ -3,10 +3,10 @@
 import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { Header } from '@/components/Header'
-import { TweetList } from '@/components/TweetList'
+import { NotificationHistory } from '@/components/NotificationHistory'
 import { useEffect } from 'react'
 
-export default function Dashboard() {
+export default function NotificationsPage() {
   const { data: session, status } = useSession()
 
   useEffect(() => {
@@ -30,14 +30,8 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-2">Your Tweets</h1>
-          <p className="text-gray-400">
-            Select tweets to convert into Instagram story images
-          </p>
-        </div>
-        <TweetList />
+      <main className="container mx-auto px-4 py-8 max-w-3xl">
+        <NotificationHistory />
       </main>
     </div>
   )
