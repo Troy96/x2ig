@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { tweets, scheduledFor, theme } = body
+    const { tweets, scheduledFor, theme, postType, previewUrl } = body
 
     if (!tweets || !Array.isArray(tweets) || tweets.length === 0) {
       return NextResponse.json(
@@ -104,6 +104,9 @@ export async function POST(request: NextRequest) {
         continue
       }
 
+      // Validate postType
+      const validPostType = postType === 'POST' ? 'POST' : 'STORY'
+
       // Create scheduled post (queue disabled - just save to DB)
       const post = await prisma.scheduledPost.create({
         data: {
@@ -111,7 +114,9 @@ export async function POST(request: NextRequest) {
           tweetId: tweet.id,
           scheduledFor: scheduledDate,
           theme: selectedTheme,
+          postType: validPostType,
           status: 'PENDING',
+          previewUrl: previewUrl || null,
         },
       })
 
@@ -158,14 +163,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    if (post.status !== 'PENDING') {
+    if (post.status === 'PROCESSING') {
       return NextResponse.json(
-        { error: 'Can only cancel pending posts' },
+        { error: 'Cannot cancel a post that is currently processing' },
         { status: 400 }
       )
     }
 
-    // Delete from database (queue disabled)
+    // Delete from database (allow PENDING, COMPLETED, FAILED)
     await prisma.scheduledPost.delete({
       where: { id: post.id },
     })

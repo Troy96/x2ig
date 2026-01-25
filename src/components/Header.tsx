@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LogOut, Bell, Settings } from 'lucide-react'
+import { LogOut, Bell, Settings, Calendar } from 'lucide-react'
 
 export function Header() {
   const { data: session } = useSession()
@@ -20,14 +20,23 @@ export function Header() {
         {session?.user && (
           <div className="flex items-center gap-4">
             <Link
+              href="/scheduled"
+              className="p-2 rounded-lg hover:bg-[var(--card-border)] transition-colors theme-muted hover:theme-fg"
+              title="Scheduled Posts"
+            >
+              <Calendar className="w-5 h-5" />
+            </Link>
+            <Link
               href="/notifications"
               className="p-2 rounded-lg hover:bg-[var(--card-border)] transition-colors theme-muted hover:theme-fg"
+              title="Notifications"
             >
               <Bell className="w-5 h-5" />
             </Link>
             <Link
               href="/settings"
               className="p-2 rounded-lg hover:bg-[var(--card-border)] transition-colors theme-muted hover:theme-fg"
+              title="Settings"
             >
               <Settings className="w-5 h-5" />
             </Link>
