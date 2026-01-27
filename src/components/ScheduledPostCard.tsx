@@ -64,11 +64,17 @@ const statusConfig = {
 const themeLabels: Record<string, string> = {
   SHINY_PURPLE: 'Shiny Purple',
   MANGO_JUICE: 'Mango Juice',
+  OCEAN_BREEZE: 'Ocean Breeze',
+  FOREST_GLOW: 'Forest Glow',
+  SUNSET_VIBES: 'Sunset Vibes',
 }
 
 const themeGradients: Record<string, string> = {
   SHINY_PURPLE: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  MANGO_JUICE: 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #f6d365 100%)',
+  MANGO_JUICE: 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #f9a825 100%)',
+  OCEAN_BREEZE: 'linear-gradient(135deg, #667eea 0%, #64b5f6 50%, #4dd0e1 100%)',
+  FOREST_GLOW: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)',
+  SUNSET_VIBES: 'linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%)',
 }
 
 export function ScheduledPostCard({
