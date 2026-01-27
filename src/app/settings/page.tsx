@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
-import { Bell, Mail, LogOut, Trash2, RefreshCw, Palette, Check, Sparkles } from 'lucide-react'
+import { Bell, Mail, LogOut, Trash2, RefreshCw, Palette, Check, Sparkles, Instagram, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme, themes, Theme } from '@/contexts/ThemeContext'
 import { useStoryTheme, storyThemes, daysOfWeek, DayOfWeek, StoryTheme } from '@/contexts/StoryThemeContext'
@@ -16,6 +16,13 @@ export default function SettingsPage() {
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushSupported, setPushSupported] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [instagramAccount, setInstagramAccount] = useState<{
+    username: string
+    isExpired: boolean
+    expiresIn: number
+  } | null>(null)
+  const [instagramLoading, setInstagramLoading] = useState(true)
+  const [instagramMessage, setInstagramMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -30,6 +37,67 @@ export default function SettingsPage() {
       setPushEnabled(Notification.permission === 'granted')
     }
   }, [])
+
+  // Check for Instagram OAuth result in URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const instagramSuccess = params.get('instagram_success')
+    const instagramError = params.get('instagram_error')
+
+    if (instagramSuccess) {
+      setInstagramMessage({ type: 'success', text: 'Instagram account connected successfully!' })
+      // Clean up URL
+      window.history.replaceState({}, '', '/settings')
+    } else if (instagramError) {
+      setInstagramMessage({ type: 'error', text: instagramError })
+      window.history.replaceState({}, '', '/settings')
+    }
+
+    // Clear message after 5 seconds
+    if (instagramSuccess || instagramError) {
+      setTimeout(() => setInstagramMessage(null), 5000)
+    }
+  }, [])
+
+  // Fetch Instagram account status
+  useEffect(() => {
+    const fetchInstagramAccount = async () => {
+      try {
+        const response = await fetch('/api/instagram/account')
+        const data = await response.json()
+        if (data.account) {
+          setInstagramAccount(data.account)
+        }
+      } catch (error) {
+        console.error('Error fetching Instagram account:', error)
+      } finally {
+        setInstagramLoading(false)
+      }
+    }
+
+    if (session?.user?.id) {
+      fetchInstagramAccount()
+    }
+  }, [session?.user?.id])
+
+  const connectInstagram = () => {
+    window.location.href = '/api/instagram/auth'
+  }
+
+  const disconnectInstagram = async () => {
+    if (!confirm('Are you sure you want to disconnect your Instagram account?')) return
+
+    try {
+      const response = await fetch('/api/instagram/account', { method: 'DELETE' })
+      if (response.ok) {
+        setInstagramAccount(null)
+        setInstagramMessage({ type: 'success', text: 'Instagram account disconnected' })
+        setTimeout(() => setInstagramMessage(null), 3000)
+      }
+    } catch (error) {
+      console.error('Error disconnecting Instagram:', error)
+    }
+  }
 
   const enablePushNotifications = async () => {
     if (!pushSupported) return
@@ -264,6 +332,88 @@ export default function SettingsPage() {
           <h2 className="text-lg font-semibold theme-muted mb-4">Account</h2>
 
           <div className="space-y-4">
+            {/* Instagram Message */}
+            {instagramMessage && (
+              <div
+                className={cn(
+                  'flex items-center gap-2 p-3 rounded-lg text-sm',
+                  instagramMessage.type === 'success'
+                    ? 'bg-[var(--success-muted)] text-[var(--success-text)]'
+                    : 'bg-red-500/10 text-red-500'
+                )}
+              >
+                {instagramMessage.type === 'success' ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <AlertCircle className="w-4 h-4" />
+                )}
+                {instagramMessage.text}
+              </div>
+            )}
+
+            {/* Instagram Account */}
+            <div className="flex items-center justify-between p-4 theme-card rounded-xl border">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Instagram className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Instagram Account</h3>
+                  <p className="text-sm theme-muted">
+                    {instagramLoading ? (
+                      'Loading...'
+                    ) : instagramAccount ? (
+                      <>@{instagramAccount.username}</>
+                    ) : (
+                      'Not connected'
+                    )}
+                  </p>
+                  {instagramAccount && !instagramAccount.isExpired && (
+                    <p className="text-xs theme-muted">
+                      Token expires in {instagramAccount.expiresIn} days
+                    </p>
+                  )}
+                  {instagramAccount?.isExpired && (
+                    <p className="text-xs text-yellow-500">
+                      Token expired - please reconnect
+                    </p>
+                  )}
+                </div>
+              </div>
+              {instagramLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin theme-muted" />
+              ) : instagramAccount ? (
+                <div className="flex items-center gap-2">
+                  {instagramAccount.isExpired ? (
+                    <button
+                      onClick={connectInstagram}
+                      className="px-3 py-1.5 bg-[var(--accent)] text-white text-sm rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Reconnect
+                    </button>
+                  ) : (
+                    <span className="px-3 py-1 bg-[var(--success-muted)] text-[var(--success-text)] text-sm rounded-full">
+                      Connected
+                    </span>
+                  )}
+                  <button
+                    onClick={disconnectInstagram}
+                    className="p-1.5 rounded-lg hover:bg-[var(--card-border)] transition-colors theme-muted"
+                    title="Disconnect"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={connectInstagram}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm rounded-lg font-medium hover:opacity-90 transition-opacity"
+                >
+                  Connect
+                </button>
+              )}
+            </div>
+
             {/* Connected X Account */}
             <div className="flex items-center justify-between p-4 theme-card rounded-xl border">
               <div className="flex items-center gap-3">
