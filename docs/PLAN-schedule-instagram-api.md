@@ -2,8 +2,9 @@
 
 > **Issue #5**: Implement the Schedule button and decide what happens next
 >
-> **Status**: Planning complete, ready for implementation
+> **Status**: Instagram OAuth complete, auto-posting pending
 > **Created**: 2026-01-25
+> **Updated**: 2026-01-27
 
 ## Overview
 Implement a complete scheduling system with two posting modes:
@@ -397,3 +398,77 @@ Before Instagram API can work, you must:
 5. Get App ID and App Secret
 
 This order allows incremental testing - Steps 1-3 can be built and tested without waiting for Meta approval.
+
+---
+
+## Implementation Progress
+
+### Completed (2026-01-27)
+- [x] Phase 1: Database Schema Updates
+- [x] Phase 2: ScheduleModal with Story/Post selection + day presets
+- [x] Phase 3: Instagram OAuth Integration
+- [x] Phase 4: Settings Page - Instagram Connection UI
+- [x] Phase 5: Scheduled Posts Management Page
+
+### Remaining TODOs
+- [ ] **Auto-posting worker** - Implement the logic that actually posts to Instagram when a scheduled POST is due
+- [ ] **Token refresh mechanism** - Refresh tokens before they expire (60-day validity)
+
+---
+
+## Challenges & Solutions: Instagram Login Setup
+
+Setting up Instagram OAuth was challenging due to Meta's complex and frequently changing developer portal. Here's what we encountered and how we solved it:
+
+### Challenge 1: Phone Verification for Developer Account
+**Problem:** Meta required phone verification through Account Center, but the path was unclear.
+**Solution:** Navigate through Facebook Settings → Personal and Account Information → Contact Info, or use the mobile app for faster sync.
+
+### Challenge 2: Finding OAuth Redirect URI Settings
+**Problem:** Couldn't find where to add redirect URIs for Instagram OAuth.
+**Solution:** Add the redirect URI in **Facebook Login for Business → Settings → Valid OAuth Redirect URIs** (not in a separate Instagram section).
+
+### Challenge 3: HTTPS Required for Redirect URIs
+**Problem:** Meta requires HTTPS for all redirect URIs, but localhost is HTTP.
+**Solution:** Use **ngrok** to create an HTTPS tunnel: `ngrok http 3000` gives a URL like `https://abc123.ngrok-free.app`
+
+### Challenge 4: Invalid Scopes Error
+**Problem:** Got "Invalid Scopes" error for `instagram_basic`, `instagram_content_publish`.
+**Solution:** Use the new Instagram Platform API (July 2024) with scopes:
+- `instagram_business_basic`
+- `instagram_business_content_publish`
+
+And use `https://www.instagram.com/oauth/authorize` endpoint instead of Facebook's OAuth endpoint.
+
+### Challenge 5: "Invalid platform app" Error
+**Problem:** OAuth flow started but failed with "Invalid platform app".
+**Solution:** Add **"Instagram API with Instagram Login"** as a product in Meta Developer Portal (separate from regular Instagram Graph API).
+
+### Challenge 6: "Insufficient Developer Role" Error
+**Problem:** Could log in to Instagram but got role error.
+**Solution:**
+1. Link Instagram and Facebook accounts in **Meta Account Center**
+2. Add redirect URI under **"setup instagram business login"** section (not Facebook Login)
+3. Switch app from **Development** to **Live** mode
+
+### Challenge 7: App Requires Privacy Policy for Live Mode
+**Problem:** Couldn't switch to Live mode without a valid Privacy Policy URL.
+**Solution:** Created `/privacy` page in the app and used the ngrok URL: `https://xxx.ngrok-free.app/privacy`
+
+### Challenge 8: NextAuth Cookies Not Working with HTTPS
+**Problem:** OAuth state cookie was missing when using ngrok HTTPS URL.
+**Solution:** Update `src/lib/auth.ts` to set `secure: true` dynamically:
+```typescript
+secure: process.env.NEXTAUTH_URL?.startsWith('https')
+```
+
+### Challenge 9: Redirect After OAuth Goes to localhost
+**Problem:** After successful OAuth, redirect went to `localhost:3000` instead of ngrok URL.
+**Solution:** Use `process.env.NEXTAUTH_URL` as base URL for redirects in callback route instead of `request.url`.
+
+### Key Learnings
+1. **Use the new Instagram Platform API** (July 2024) - it's simpler and doesn't require Facebook Page connection
+2. **ngrok is essential** for local development with Meta OAuth (HTTPS requirement)
+3. **Meta's portal changes frequently** - documentation may be outdated
+4. **App must be in Live mode** for OAuth to work properly with your own account
+5. **Instagram and Facebook accounts must be linked** in Meta Account Center
