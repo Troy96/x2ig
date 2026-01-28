@@ -410,9 +410,14 @@ This order allows incremental testing - Steps 1-3 can be built and tested withou
 - [x] Phase 4: Settings Page - Instagram Connection UI
 - [x] Phase 5: Scheduled Posts Management Page
 
+### Completed (2026-01-28)
+- [x] **Auto-posting worker** - `src/workers/scheduler.ts` now checks postType and auto-posts to Instagram for POST type
+- [x] **Instagram API lib** - `src/lib/instagram.ts` with createMediaContainer, waitForContainerReady, publishMedia, refreshAccessToken
+- [x] **Token refresh mechanism** - `src/workers/tokenRefresh.ts` refreshes tokens expiring within 7 days
+
 ### Remaining TODOs
-- [ ] **Auto-posting worker** - Implement the logic that actually posts to Instagram when a scheduled POST is due
-- [ ] **Token refresh mechanism** - Refresh tokens before they expire (60-day validity)
+- [ ] **Set up cron job** - Schedule tokenRefresh.ts to run daily (e.g., via Railway cron or separate service)
+- [ ] **Test auto-posting** - End-to-end test with a real Instagram Business/Creator account
 
 ---
 

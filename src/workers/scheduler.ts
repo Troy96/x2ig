@@ -5,6 +5,7 @@ import { uploadImage } from '../lib/cloudinary'
 import { sendPushNotification } from '../lib/notifications'
 import { sendEmailNotification } from '../lib/email'
 import { redisConnection } from '../lib/queue'
+import { publishImageToInstagram } from '../lib/instagram'
 
 const prisma = new PrismaClient()
 
@@ -36,19 +37,87 @@ async function processScreenshotJob(job: Job<ScreenshotJobData>) {
     console.log('Uploading to Cloudinary...')
     const uploadResult = await uploadImage(screenshot.buffer, `x2ig/${userId}`)
 
-    // Update post with screenshot URL
+    // Get the scheduled post details to check postType
+    const scheduledPost = await prisma.scheduledPost.findUnique({
+      where: { id: scheduledPostId },
+      include: {
+        tweet: true,
+        user: {
+          include: {
+            instagramAccount: true,
+          },
+        },
+      },
+    })
+
+    if (!scheduledPost) {
+      throw new Error(`Scheduled post ${scheduledPostId} not found`)
+    }
+
+    let instagramPostId: string | null = null
+    let postedAt: Date | null = null
+
+    // Handle POST type - auto-post to Instagram
+    if (scheduledPost.postType === 'POST') {
+      const instagramAccount = scheduledPost.user.instagramAccount
+
+      if (!instagramAccount) {
+        throw new Error('No Instagram account connected for auto-posting')
+      }
+
+      // Check if token is expired
+      if (new Date() > instagramAccount.tokenExpiresAt) {
+        throw new Error('Instagram access token has expired. Please reconnect your account.')
+      }
+
+      console.log(`Auto-posting to Instagram for user @${instagramAccount.username}...`)
+
+      try {
+        const result = await publishImageToInstagram(
+          instagramAccount.accessToken,
+          instagramAccount.instagramUserId,
+          uploadResult.url,
+          // Optional: Use tweet text as caption (truncated if needed)
+          scheduledPost.tweet.text.slice(0, 2200) // Instagram caption limit
+        )
+
+        instagramPostId = result.mediaId
+        postedAt = new Date()
+        console.log(`Successfully posted to Instagram! Media ID: ${instagramPostId}`)
+
+        if (result.permalink) {
+          console.log(`Permalink: ${result.permalink}`)
+        }
+      } catch (igError) {
+        console.error('Instagram publishing failed:', igError)
+        throw new Error(`Instagram publishing failed: ${igError instanceof Error ? igError.message : 'Unknown error'}`)
+      }
+    }
+
+    // Update post with screenshot URL and Instagram details
     const updatedPost = await prisma.scheduledPost.update({
       where: { id: scheduledPostId },
       data: {
         status: 'COMPLETED',
         screenshotUrl: uploadResult.url,
         notifiedAt: new Date(),
+        ...(instagramPostId && { instagramPostId }),
+        ...(postedAt && { postedAt }),
       },
       include: {
         tweet: true,
         user: true,
       },
     })
+
+    // Determine notification content based on post type
+    const isAutoPosted = scheduledPost.postType === 'POST' && instagramPostId
+    const notificationTitle = isAutoPosted
+      ? 'Posted to Instagram!'
+      : 'Your Instagram Story is Ready!'
+    const notificationBody = isAutoPosted
+      ? `Your post "${updatedPost.tweet.text.slice(0, 50)}..." has been published to Instagram`
+      : `Screenshot for "${updatedPost.tweet.text.slice(0, 50)}..." is ready to post`
 
     // Get user's FCM tokens
     const fcmTokens = await prisma.fcmToken.findMany({
@@ -62,12 +131,12 @@ async function processScreenshotJob(job: Job<ScreenshotJobData>) {
         try {
           await sendPushNotification({
             token: token.token,
-            title: 'Your Instagram Story is Ready!',
-            body: `Screenshot for "${updatedPost.tweet.text.slice(0, 50)}..." is ready to post`,
+            title: notificationTitle,
+            body: notificationBody,
             imageUrl: uploadResult.url,
             data: {
               postId: scheduledPostId,
-              type: 'POST_READY',
+              type: isAutoPosted ? 'POST_PUBLISHED' : 'POST_READY',
             },
           })
         } catch (err) {
@@ -82,7 +151,7 @@ async function processScreenshotJob(job: Job<ScreenshotJobData>) {
       try {
         await sendEmailNotification({
           to: updatedPost.user.email,
-          subject: 'Your Instagram Story is Ready!',
+          subject: notificationTitle,
           tweetText: updatedPost.tweet.text,
           imageUrl: uploadResult.url,
         })
@@ -96,8 +165,8 @@ async function processScreenshotJob(job: Job<ScreenshotJobData>) {
       data: {
         userId,
         type: 'POST_READY',
-        title: 'Story Ready',
-        body: `Your screenshot is ready to post on Instagram`,
+        title: isAutoPosted ? 'Posted to Instagram' : 'Story Ready',
+        body: notificationBody,
         imageUrl: uploadResult.url,
         postId: scheduledPostId,
       },
