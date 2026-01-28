@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { X, Clock, Palette, Loader2, Sparkles } from 'lucide-react'
-import { cn, formatDate } from '@/lib/utils'
-import { useStoryTheme, storyThemes, StoryTheme } from '@/contexts/StoryThemeContext'
+import { formatDate } from '@/lib/utils'
+import { useStoryTheme, storyThemes, type StoryTheme } from '@/contexts/StoryThemeContext'
 
 interface Tweet {
   id: string
@@ -237,9 +237,6 @@ export function BulkScheduleModal({ tweets, onClose, onScheduled }: BulkSchedule
             {slots.map((slot, index) => {
               const tweet = getTweetById(slot.tweetId)
               if (!tweet) return null
-
-              const effectiveTheme = getEffectiveTheme(slot)
-              const themeData = storyThemes.find(t => t.id === effectiveTheme)
 
               return (
                 <div

@@ -1,5 +1,4 @@
 import { chromium, Browser } from 'playwright'
-import sharp from 'sharp'
 
 export type Theme = 'SHINY_PURPLE' | 'MANGO_JUICE' | 'OCEAN_BREEZE' | 'FOREST_GLOW' | 'SUNSET_VIBES'
 
