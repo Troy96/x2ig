@@ -23,21 +23,7 @@ async function processScreenshotJob(job: Job<ScreenshotJobData>) {
   console.log(`Processing job ${job.id} for scheduled post ${scheduledPostId}`)
 
   try {
-    // Update status to processing
-    await prisma.scheduledPost.update({
-      where: { id: scheduledPostId },
-      data: { status: 'PROCESSING' },
-    })
-
-    // Capture screenshot using 10015.io
-    console.log(`Capturing screenshot for tweet: ${tweetUrl}`)
-    const screenshot = await captureTweetScreenshot(tweetUrl, theme)
-
-    // Upload to Cloudinary
-    console.log('Uploading to Cloudinary...')
-    const uploadResult = await uploadImage(screenshot.buffer, `x2ig/${userId}`)
-
-    // Get the scheduled post details to check postType
+    // Get the scheduled post details first
     const scheduledPost = await prisma.scheduledPost.findUnique({
       where: { id: scheduledPostId },
       include: {
@@ -53,6 +39,26 @@ async function processScreenshotJob(job: Job<ScreenshotJobData>) {
     if (!scheduledPost) {
       throw new Error(`Scheduled post ${scheduledPostId} not found`)
     }
+
+    // Update status to processing
+    await prisma.scheduledPost.update({
+      where: { id: scheduledPostId },
+      data: { status: 'PROCESSING' },
+    })
+
+    // Capture screenshot with tweet data
+    console.log(`Capturing screenshot for tweet: ${tweetUrl}`)
+    const screenshot = await captureTweetScreenshot(tweetUrl, theme, {
+      text: scheduledPost.tweet.text,
+      authorName: scheduledPost.tweet.authorName,
+      authorUsername: scheduledPost.tweet.authorUsername,
+      authorImage: scheduledPost.tweet.authorImage,
+      createdAt: scheduledPost.tweet.createdAt,
+    })
+
+    // Upload to Cloudinary
+    console.log('Uploading to Cloudinary...')
+    const uploadResult = await uploadImage(screenshot.buffer, `x2ig/${userId}`)
 
     let instagramPostId: string | null = null
     let postedAt: Date | null = null

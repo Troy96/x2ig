@@ -71,13 +71,6 @@ export async function GET(request: NextRequest) {
     }
 
     const shortLivedToken = tokenData.access_token
-    const instagramUserId = tokenData.user_id?.toString()
-
-    if (!instagramUserId) {
-      return NextResponse.redirect(
-        new URL('/settings?instagram_error=Failed to get Instagram user ID', baseUrl)
-      )
-    }
 
     // Step 2: Exchange for long-lived token (60 days)
     const longLivedResponse = await fetch(
@@ -96,9 +89,9 @@ export async function GET(request: NextRequest) {
     const longLivedToken = longLivedData.access_token
     const expiresIn = longLivedData.expires_in || 5184000 // Default 60 days in seconds
 
-    // Step 3: Get Instagram user info
+    // Step 3: Get Instagram user info (use 'id' field - this is the correct ID for publishing)
     const igUserResponse = await fetch(
-      `https://graph.instagram.com/v21.0/me?fields=user_id,username&access_token=${longLivedToken}`
+      `https://graph.instagram.com/v21.0/me?fields=id,username&access_token=${longLivedToken}`
     )
 
     const igUserData = await igUserResponse.json()
@@ -110,7 +103,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    const instagramUserId = igUserData.id
     const username = igUserData.username
+
+    if (!instagramUserId) {
+      return NextResponse.redirect(
+        new URL('/settings?instagram_error=Failed to get Instagram user ID', baseUrl)
+      )
+    }
 
     // Step 4: Calculate token expiration date
     const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000)

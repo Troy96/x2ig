@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getDefaultTheme } from '@/lib/utils'
+import { addScreenshotJob, removeScreenshotJob } from '@/lib/queue'
 
 // GET - List scheduled posts
 export async function GET(request: NextRequest) {
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
       // Validate postType
       const validPostType = postType === 'POST' ? 'POST' : 'STORY'
 
-      // Create scheduled post (queue disabled - just save to DB)
+      // Create scheduled post
       const post = await prisma.scheduledPost.create({
         data: {
           userId: session.user.id,
@@ -119,6 +120,19 @@ export async function POST(request: NextRequest) {
           previewUrl: previewUrl || null,
         },
       })
+
+      // Add job to queue
+      const tweetUrl = `https://twitter.com/${tweet.authorUsername}/status/${tweet.tweetId}`
+      await addScreenshotJob(
+        {
+          scheduledPostId: post.id,
+          tweetId: tweet.id,
+          userId: session.user.id,
+          theme: selectedTheme,
+          tweetUrl,
+        },
+        scheduledDate
+      )
 
       createdPosts.push(post)
     }
@@ -168,6 +182,11 @@ export async function DELETE(request: NextRequest) {
         { error: 'Cannot cancel a post that is currently processing' },
         { status: 400 }
       )
+    }
+
+    // Remove job from queue if pending
+    if (post.status === 'PENDING') {
+      await removeScreenshotJob(post.id)
     }
 
     // Delete from database (allow PENDING, COMPLETED, FAILED)
