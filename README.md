@@ -5,12 +5,18 @@ A web application that converts X (Twitter) posts into beautifully styled screen
 ## Features
 
 - **X OAuth Login** - Authenticate with your X/Twitter account
-- **Tweet Dashboard** - View and filter your recent tweets
-- **Custom Themes** - 5 gradient themes with auto-selection based on day
+- **Tweet Dashboard** - View and filter your recent tweets with pagination
+- **Custom Themes** - 5 gradient themes (Shiny Purple, Mango Juice, Ocean Breeze, Forest Glow, Sunset Vibes)
+- **Auto Theme Selection** - Automatically picks theme based on day of week
 - **Preview Generation** - See how your post will look before scheduling
-- **Scheduling** - Schedule posts for specific dates/times
+- **Single & Bulk Scheduling** - Schedule one or multiple tweets at once
+- **Two Post Types**:
+  - **Story** - Generate screenshot for manual posting
+  - **Post** - Auto-publish directly to Instagram feed
 - **Instagram Auto-Posting** - Automatically post to Instagram at scheduled time
-- **Square Output** - 1080x1080px images perfect for Instagram
+- **Multi-channel Notifications** - Push (Firebase), Email (Resend), and in-app
+- **Token Auto-Refresh** - Instagram tokens automatically refreshed before expiry
+- **Square Output** - 1080x1080px images optimized for Instagram
 
 ## Tech Stack
 
@@ -93,11 +99,27 @@ npx prisma db push
 # Run development server
 npm run dev
 
-# Run worker (separate terminal)
+# Run worker (separate terminal - required for scheduling to work)
 npm run worker
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to use the app.
+
+> **Important:** The worker process must be running for scheduled posts to be processed. It handles screenshot generation, Cloudinary upload, and Instagram auto-posting.
+
+### NPM Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Build for production (includes prisma generate & db push) |
+| `npm run start` | Start production server |
+| `npm run worker` | Run background worker for job processing |
+| `npm run worker:dev` | Run worker with hot reload |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:push` | Push schema to database |
+| `npm run db:migrate` | Create database migration |
+| `npm run db:studio` | Open Prisma Studio UI |
 
 ## Project Structure
 
@@ -167,6 +189,70 @@ x2ig/
 | `/api/fcm` | POST | Register FCM token for push notifications |
 | `/api/fcm` | DELETE | Unregister FCM token |
 | `/api/health` | GET | Health check endpoint |
+
+## Database Models
+
+| Model | Purpose |
+|-------|---------|
+| User | Application users with X account info |
+| Account | OAuth provider accounts (NextAuth) |
+| Session | User sessions (NextAuth) |
+| Tweet | Cached tweets from user's timeline |
+| ScheduledPost | Posts scheduled for processing/publishing |
+| Notification | In-app notifications |
+| FcmToken | Push notification tokens |
+| InstagramAccount | Connected Instagram accounts |
+
+**Enums:**
+- `Theme`: SHINY_PURPLE, MANGO_JUICE, OCEAN_BREEZE, FOREST_GLOW, SUNSET_VIBES
+- `PostStatus`: PENDING, PROCESSING, COMPLETED, FAILED
+- `PostType`: STORY (screenshot only), POST (auto-publish to Instagram)
+
+## Architecture
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Vercel        │     │    Railway      │     │   Supabase      │
+│   (Web App)     │────▶│    (Redis)      │     │  (PostgreSQL)   │
+│   Next.js 14    │     │    BullMQ       │     │                 │
+└────────┬────────┘     └────────┬────────┘     └────────▲────────┘
+         │                       │                       │
+         │              ┌────────▼────────┐              │
+         │              │    Railway      │              │
+         └─────────────▶│    (Worker)     │──────────────┘
+                        │  - Screenshot   │
+                        │  - Cloudinary   │────▶ Cloudinary
+                        │  - Instagram    │────▶ Instagram API
+                        │  - Notifications│────▶ Firebase/Resend
+                        └─────────────────┘
+```
+
+**Job Processing Flow:**
+1. User schedules post → Job added to Redis queue
+2. Worker picks up job at scheduled time
+3. Captures screenshot with Playwright
+4. Uploads to Cloudinary (1080x1080)
+5. If PostType=POST → Publishes to Instagram
+6. Sends push/email notifications
+7. Updates database status
+
+## UI Themes vs Story Themes
+
+The app has **two separate theme systems**:
+
+1. **UI Theme** (3 options) - Controls app appearance
+   - Midnight (dark)
+   - Daylight (light)
+   - Paper (warm)
+
+2. **Story Theme** (5 options) - Controls screenshot gradient background
+   - Shiny Purple
+   - Mango Juice
+   - Ocean Breeze
+   - Forest Glow
+   - Sunset Vibes
+
+Story themes can be auto-selected based on day of week in Settings.
 
 ## Development Documentation
 
