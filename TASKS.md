@@ -47,6 +47,36 @@ Options to explore:
 - [ ] Test email delivery
 - [ ] Add email preferences in Settings
 
+### 6. Instagram Token Refresh Monitoring
+**Goal:** Ensure tokens don't expire unexpectedly
+
+- [ ] Set up cron job to check token expiry daily
+- [ ] Send notification when token expires in < 7 days
+- [ ] Add token status indicator in Settings page
+- [ ] Auto-refresh tokens when possible
+
+### 7. Error Notifications
+**Goal:** Alert user when posts fail
+
+- [ ] Send push/email notification on post failure
+- [ ] Include error reason in notification
+- [ ] Link to retry from notification
+
+### 8. Retry Failed Posts UI
+**Goal:** Easy way to retry failed posts from the app
+
+- [ ] Add "Retry" button on failed post cards
+- [ ] Show error message on failed posts
+- [ ] Bulk retry option for multiple failed posts
+
+### 9. Auto-Cleanup Old Posts
+**Goal:** Keep database clean
+
+- [ ] Add setting for retention period (7, 30, 90 days)
+- [ ] Cron job to delete completed posts older than retention
+- [ ] Option to keep failed posts longer for debugging
+- [ ] Clean up Cloudinary images for deleted posts
+
 ---
 
 ## Future Enhancements
