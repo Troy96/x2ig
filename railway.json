@@ -4,6 +4,6 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npm run start"
+    "startCommand": "node node_modules/next/dist/bin/next start"
   }
 }
