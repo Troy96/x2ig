@@ -58,30 +58,42 @@ A web application that converts X (Twitter) posts into beautifully styled screen
 Create a `.env` file:
 
 ```env
-# Database
-DATABASE_URL="postgresql://..."
+# Database (Supabase PostgreSQL)
+DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres"
 
 # NextAuth
-NEXTAUTH_URL="http://127.0.0.1:3000"
-NEXTAUTH_SECRET="your-secret-key"
+NEXTAUTH_URL="http://localhost:3000"                    # Local dev
+# NEXTAUTH_URL="https://your-domain.vercel.app"        # Production
+NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 
-# Twitter/X OAuth 2.0
+# Twitter/X OAuth 2.0 (from developer.twitter.com)
 TWITTER_CLIENT_ID="your-client-id"
 TWITTER_CLIENT_SECRET="your-client-secret"
 TWITTER_BEARER_TOKEN="your-bearer-token"
 
-# Redis
-REDIS_URL="redis://localhost:6379"
+# Redis (for job queue)
+REDIS_URL="redis://localhost:6379"                      # Local dev
+# REDIS_URL="redis://default:password@host:port"       # Production (Railway)
 
-# Cloudinary
+# Cloudinary (from cloudinary.com dashboard)
 CLOUDINARY_CLOUD_NAME="your-cloud-name"
 CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"
 
-# Instagram
+# Instagram (from developers.facebook.com)
 INSTAGRAM_APP_ID="your-app-id"
 INSTAGRAM_APP_SECRET="your-app-secret"
-INSTAGRAM_REDIRECT_URI="http://localhost:3000/api/instagram/callback"
+INSTAGRAM_REDIRECT_URI="http://localhost:3000/api/instagram/callback"    # Local dev
+# INSTAGRAM_REDIRECT_URI="https://your-domain.vercel.app/api/instagram/callback"  # Production
+
+# Optional: Push Notifications (Firebase)
+# FIREBASE_PROJECT_ID="your-project-id"
+# FIREBASE_CLIENT_EMAIL="your-client-email"
+# FIREBASE_PRIVATE_KEY="your-private-key"
+
+# Optional: Email Notifications (Resend)
+# RESEND_API_KEY="your-api-key"
+# RESEND_FROM_EMAIL="notifications@yourdomain.com"
 ```
 
 ### Installation
