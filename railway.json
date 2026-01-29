@@ -4,8 +4,8 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npm run start",
-    "healthcheckPath": "/",
+    "startCommand": "node .next/standalone/server.js",
+    "healthcheckPath": "/api/auth/providers",
     "healthcheckTimeout": 100
   }
 }
