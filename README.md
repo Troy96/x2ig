@@ -149,12 +149,24 @@ x2ig/
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/api/auth/[...nextauth]` | GET/POST | NextAuth.js authentication |
 | `/api/tweets` | GET | Fetch tweets (supports pagination) |
+| `/api/schedule` | GET | List scheduled posts |
 | `/api/schedule` | POST | Schedule a post |
 | `/api/schedule` | DELETE | Cancel a scheduled post |
+| `/api/schedule/[id]/retry` | POST | Retry a failed post |
+| `/api/schedule/[id]/process` | POST | Manually process a post |
+| `/api/schedule/[id]/mark-posted` | POST | Mark post as manually posted |
 | `/api/preview` | POST | Generate preview screenshot |
 | `/api/instagram/auth` | GET | Start Instagram OAuth |
 | `/api/instagram/callback` | GET | Instagram OAuth callback |
+| `/api/instagram/account` | GET | Get connected Instagram account |
+| `/api/instagram/account` | DELETE | Disconnect Instagram account |
+| `/api/notifications` | GET | Get user notifications |
+| `/api/notifications` | PATCH | Mark notifications as read |
+| `/api/fcm` | POST | Register FCM token for push notifications |
+| `/api/fcm` | DELETE | Unregister FCM token |
+| `/api/health` | GET | Health check endpoint |
 
 ## Development Documentation
 
