@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    instrumentationHook: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -22,9 +19,6 @@ const nextConfig = {
         hostname: '*.cloudinary.com',
       },
     ],
-  },
-  experimental: {
-    serverComponentsExternalPackages: ['playwright'],
   },
 }
 
