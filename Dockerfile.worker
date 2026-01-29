@@ -21,18 +21,15 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and prisma schema first
 COPY package*.json ./
+COPY prisma ./prisma
 
-# Install dependencies
+# Install dependencies (this will run postinstall which needs prisma schema)
 RUN npm ci
 
 # Install Playwright browsers
 RUN npx playwright install chromium
-
-# Generate Prisma client
-COPY prisma ./prisma
-RUN npx prisma generate
 
 # Copy rest of the app
 COPY . .
