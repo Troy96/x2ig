@@ -15,6 +15,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const refresh = searchParams.get('refresh') === 'true'
     const filter = searchParams.get('filter') || 'all' // all, posted, unposted
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '20', 10)
+    const fetchCount = parseInt(searchParams.get('fetchCount') || '20', 10) // How many to fetch from Twitter
 
     // Get user's X user ID
     const user = await prisma.user.findUnique({
@@ -29,23 +32,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Check if we need to fetch fresh tweets
-    const existingTweets = await prisma.tweet.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: 'desc' },
-    })
-
-    const shouldRefresh =
-      refresh ||
-      existingTweets.length === 0 ||
-      (existingTweets[0] &&
-        Date.now() - existingTweets[0].fetchedAt.getTime() > 5 * 60 * 1000) // 5 minutes cache
-
-    let tweets = existingTweets
-
-    if (shouldRefresh) {
-      // Fetch fresh tweets from X API (up to 200 with pagination)
-      const freshTweets = await fetchUserTweets(user.xUserId, 200)
+    // Only fetch from Twitter if explicitly requested with refresh=true
+    // No more automatic refresh based on time
+    if (refresh) {
+      // Fetch tweets from X API (limited to fetchCount to save credits)
+      const freshTweets = await fetchUserTweets(user.xUserId, Math.min(fetchCount, 100))
 
       // Upsert tweets to database
       for (const tweet of freshTweets) {
@@ -73,39 +64,55 @@ export async function GET(request: NextRequest) {
           },
         })
       }
-
-      // Refetch from database
-      tweets = await prisma.tweet.findMany({
-        where: { userId: session.user.id },
-        orderBy: { createdAt: 'desc' },
-      })
     }
 
-    // Get scheduled post statuses
+    // Build filter conditions
+    const whereCondition: Record<string, unknown> = { userId: session.user.id }
+
+    // Get scheduled post statuses for filtering
     const scheduledPosts = await prisma.scheduledPost.findMany({
       where: { userId: session.user.id },
       select: { tweetId: true, status: true },
     })
 
-    const scheduledTweetIds = new Set(
-      scheduledPosts
-        .filter((p) => p.status === 'COMPLETED')
-        .map((p) => p.tweetId)
-    )
+    const completedTweetIds = scheduledPosts
+      .filter((p) => p.status === 'COMPLETED')
+      .map((p) => p.tweetId)
 
-    // Filter tweets
-    let filteredTweets = tweets.map((tweet) => ({
+    if (filter === 'posted') {
+      whereCondition.id = { in: completedTweetIds }
+    } else if (filter === 'unposted') {
+      whereCondition.id = { notIn: completedTweetIds }
+    }
+
+    // Get total count for pagination
+    const totalCount = await prisma.tweet.count({ where: whereCondition })
+
+    // Fetch paginated tweets from database
+    const tweets = await prisma.tweet.findMany({
+      where: whereCondition,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    })
+
+    // Mark which tweets are posted
+    const scheduledTweetIds = new Set(completedTweetIds)
+    const tweetsWithStatus = tweets.map((tweet) => ({
       ...tweet,
       isPosted: scheduledTweetIds.has(tweet.id),
     }))
 
-    if (filter === 'posted') {
-      filteredTweets = filteredTweets.filter((t) => t.isPosted)
-    } else if (filter === 'unposted') {
-      filteredTweets = filteredTweets.filter((t) => !t.isPosted)
-    }
-
-    return NextResponse.json({ tweets: filteredTweets })
+    return NextResponse.json({
+      tweets: tweetsWithStatus,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasMore: page * limit < totalCount,
+      },
+    })
   } catch (error) {
     console.error('Error fetching tweets:', error)
     return NextResponse.json(
