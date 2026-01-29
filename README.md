@@ -1,6 +1,6 @@
-# X2IG - X (Twitter) to Instagram Story Converter
+# X2IG - X (Twitter) to Instagram
 
-A web application that converts X (Twitter) posts into beautifully styled screenshots and auto-posts them to Instagram.
+A platform to amplify your X (Twitter) content - generate beautiful screenshots, auto-post to Instagram Stories and Posts, and manage your social media presence from one place.
 
 ## Features
 

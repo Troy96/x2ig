@@ -1,7 +1,7 @@
 {
   "name": "x2ig",
   "version": "0.1.0",
-  "description": "X (Twitter) to Instagram Story Converter",
+  "description": "A platform to amplify your X (Twitter) content - generate beautiful screenshots, auto-post to Instagram, and manage your social media presence",
   "author": "Tuhin Roy",
   "private": true,
   "scripts": {

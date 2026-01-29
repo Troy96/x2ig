@@ -15,8 +15,8 @@ const geistMono = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'x2ig - X to Instagram',
-  description: 'Convert your X posts to styled Instagram stories',
+  title: 'X2IG - X to Instagram',
+  description: 'A platform to amplify your X (Twitter) content - generate beautiful screenshots, auto-post to Instagram, and manage your social media presence',
 }
 
 export default function RootLayout({
