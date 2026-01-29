@@ -4,6 +4,19 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './prisma'
 import type { Adapter } from 'next-auth/adapters'
 
+// Force NEXTAUTH_URL to override Vercel's auto-detected URL
+const getBaseUrl = () => {
+  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  return 'http://localhost:3000'
+}
+
+// Set NEXTAUTH_URL if not already set
+if (!process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = getBaseUrl()
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
