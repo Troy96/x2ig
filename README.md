@@ -223,30 +223,25 @@ x2ig/
 ## Architecture
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Vercel        │     │    Railway      │     │   Supabase      │
-│   (Web App)     │────▶│    (Redis)      │     │  (PostgreSQL)   │
-│   Next.js 14    │     │    BullMQ       │     │                 │
-└────────┬────────┘     └────────┬────────┘     └────────▲────────┘
-         │                       │                       │
-         │              ┌────────▼────────┐              │
-         │              │    Railway      │              │
-         └─────────────▶│    (Worker)     │──────────────┘
-                        │  - Screenshot   │
-                        │  - Cloudinary   │────▶ Cloudinary
-                        │  - Instagram    │────▶ Instagram API
-                        │  - Notifications│────▶ Firebase/Resend
-                        └─────────────────┘
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│    Vercel    │      │   Railway    │      │   Supabase   │
+│   (Web App)  │─────▶│   (Worker)   │─────▶│ (PostgreSQL) │
+└──────────────┘      └──────┬───────┘      └──────────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+        ┌──────────┐  ┌──────────┐  ┌──────────────┐
+        │Cloudinary│  │ Instagram│  │ Notifications│
+        │ (Images) │  │   API    │  │ (FCM/Email)  │
+        └──────────┘  └──────────┘  └──────────────┘
 ```
 
-**Job Processing Flow:**
-1. User schedules post → Job added to Redis queue
-2. Worker picks up job at scheduled time
-3. Captures screenshot with Playwright
-4. Uploads to Cloudinary (1080x1080)
-5. If PostType=POST → Publishes to Instagram
-6. Sends push/email notifications
-7. Updates database status
+**Two Post Types:**
+
+| Type | Flow |
+|------|------|
+| **Story** | Schedule → Screenshot generated → Download from app → Manual upload to Instagram |
+| **Post** | Schedule → Screenshot generated → Auto-published to Instagram feed |
 
 ## UI Themes vs Story Themes
 
