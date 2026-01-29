@@ -28,9 +28,20 @@ X2IG automates the process of converting your tweets into eye-catching images wi
 | ORM | Prisma 5 |
 | Auth | NextAuth.js v4 (Twitter OAuth 2.0) |
 | Screenshot | Playwright + Custom HTML Renderer |
-| Image Processing | Sharp |
+| Image Hosting | Cloudinary |
 | Styling | Tailwind CSS |
-| Job Queue | BullMQ + Redis (optional) |
+| Job Queue | BullMQ + Redis |
+| Instagram API | Instagram Graph API (Content Publishing) |
+
+## Production Architecture
+
+| Service | Platform | URL |
+|---------|----------|-----|
+| Web App | Vercel | https://x2ig-troy96s-projects.vercel.app |
+| Database | Supabase | PostgreSQL |
+| Redis | Railway | Job queue for BullMQ |
+| Worker | Railway | Screenshot generation + Instagram posting |
+| Images | Cloudinary | Screenshot storage |
 
 ## Getting Started
 
@@ -276,23 +287,195 @@ function generateTweetCardHtml(tweet: TweetData, theme: Theme): string {
 | Screenshot generation (custom) | ~500ms |
 | Full preview flow | ~1-2 seconds |
 
+### Phase 7: Instagram Auto-Posting & Production Deployment (Jan 2026)
+
+#### Instagram OAuth & Auto-Posting
+
+**Challenge: Instagram User ID Mismatch**
+- Scheduled auto-posts were failing with "unexpected error" (code 2)
+- Discovered the stored Instagram User ID was off by 1 from the actual ID
+- **Root Cause:** OAuth callback was using `tokenData.user_id` from token exchange instead of `igUserData.id` from Graph API
+- **Solution:** Fixed OAuth callback to use the Graph API's `id` field:
+  ```typescript
+  // Before (wrong)
+  const instagramUserId = tokenData.user_id?.toString()
+
+  // After (correct)
+  const instagramUserId = igUserData.id  // From /me endpoint
+  ```
+
+**Challenge: Cloudinary Configuration**
+- Initial "Invalid api_key" errors
+- Cloud name was set to "Root" (account name) instead of actual cloud name
+- **Solution:** Used correct cloud name from Cloudinary dashboard (e.g., "dwtlvqixy")
+
+#### Production Deployment - Railway Attempt (Failed)
+
+**Multiple Issues with Railway for Next.js:**
+
+1. **Package Lock Sync Issues**
+   - `npm ci` failed due to missing packages in lock file
+   - **Solution:** Regenerated package-lock.json with `rm -rf node_modules package-lock.json && npm install`
+
+2. **ESLint Build Errors**
+   - Unused imports causing build failures
+   - **Solution:** Removed unused imports (DayOfWeek, StoryTheme, cn, sharp, themeData)
+
+3. **Static Generation Error**
+   - Settings page using `useTheme` hook failed during pre-rendering
+   - **Solution:** Split into server component (page.tsx with `export const dynamic = 'force-dynamic'`) and client component (SettingsContent.tsx)
+
+4. **Persistent 502 Errors**
+   - Container started ("Ready in 198ms") but immediately stopped
+   - No useful error logs despite multiple debugging attempts
+   - Tried: standalone output, different start commands, disabling health checks, adding instrumentation
+   - Railway just kept stopping the container with no explanation
+   - **Outcome:** Abandoned Railway for Next.js app after hours of debugging
+
+#### Production Deployment - Vercel (Success)
+
+**Vercel worked on first try!**
+
+**Challenge: Callback URL Mismatch**
+- Vercel creates unique URLs per deployment (e.g., `x2ig-1qzgu2vyu-troy96s-projects.vercel.app`)
+- NextAuth was using deployment URL instead of production URL
+- **Solution:**
+  1. Use stable production URL: `x2ig-troy96s-projects.vercel.app`
+  2. Set `NEXTAUTH_URL` environment variable correctly
+  3. Update callback URLs in X Developer Portal and Meta Developer Portal
+
+**Challenge: Vercel VERCEL_URL Override**
+- Vercel auto-sets `VERCEL_URL` which NextAuth might prefer over `NEXTAUTH_URL`
+- **Solution:** Added URL detection logic in auth.ts:
+  ```typescript
+  const getBaseUrl = () => {
+    if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
+      return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    return 'http://localhost:3000'
+  }
+  ```
+
+#### Worker Deployment on Railway
+
+**Challenge: Playwright Missing on Railway**
+- Nixpacks builder doesn't include Playwright browsers
+- Error: "Executable doesn't exist at /root/.cache/ms-playwright/chromium..."
+- **Solution Attempt 1:** `npx playwright install chromium --with-deps` in build command
+- **Failed:** Missing system libraries (libglib-2.0.so.0)
+
+**Challenge: System Dependencies for Playwright**
+- Tried nixpacks.toml with nix packages - failed with "undefined variable" errors
+- **Final Solution:** Created Dockerfile.worker with all dependencies:
+  ```dockerfile
+  FROM node:20-slim
+  RUN apt-get update && apt-get install -y \
+      libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+      libcups2 libdrm2 libxkbcommon0 libxcomposite1 \
+      libxdamage1 libxfixes3 libxrandr2 libgbm1 \
+      libasound2 libpango-1.0-0 libcairo2
+  ```
+
+**Challenge: Dockerfile Build Order**
+- `npm ci` running `postinstall` (prisma generate) before schema was copied
+- **Solution:** Copy prisma folder before npm ci:
+  ```dockerfile
+  COPY package*.json ./
+  COPY prisma ./prisma
+  RUN npm ci
+  ```
+
+**Challenge: Worker Container Stopping**
+- Worker started but container kept stopping
+- **Solution:** Added error handling and keep-alive:
+  ```typescript
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception:', err)
+  })
+
+  setInterval(() => {
+    console.log('Worker still running...', new Date().toISOString())
+  }, 5 * 60 * 1000)
+  ```
+
+#### API Optimization
+
+**Challenge: Twitter API Credits Being Depleted**
+- Auto-refresh fetching 200 tweets on every page load
+- **Solution:** Added pagination and manual refresh:
+  ```typescript
+  // Only fetch from Twitter when explicitly requested
+  if (refresh) {
+    const freshTweets = await fetchUserTweets(user.xUserId, Math.min(fetchCount, 100))
+  }
+
+  // Pagination support
+  const page = parseInt(searchParams.get('page') || '1', 10)
+  const limit = parseInt(searchParams.get('limit') || '20', 10)
+  ```
+
+#### Git Configuration Fix
+
+**Challenge: Commits Not Showing on GitHub Contributions**
+- Git using auto-configured email: `roy@Tuhins-MacBook-Pro.local`
+- **Solution:** Set correct email:
+  ```bash
+  git config user.email "troy0870@gmail.com"
+  git config user.name "Tuhin Roy"
+  ```
+
+### Final Production Setup Summary
+
+| Component | Service | Notes |
+|-----------|---------|-------|
+| Web App | Vercel | Auto-deploys from GitHub |
+| Database | Supabase | PostgreSQL with pooler connection |
+| Redis | Railway | For BullMQ job queue |
+| Worker | Railway | Dockerfile with Playwright deps |
+| Images | Cloudinary | Screenshot storage |
+
+**Environment Variables Required:**
+
+*Vercel (Web App):*
+- `DATABASE_URL` - Supabase PostgreSQL
+- `NEXTAUTH_URL` - Production URL
+- `NEXTAUTH_SECRET` - Auth secret
+- `TWITTER_CLIENT_ID`, `TWITTER_CLIENT_SECRET`, `TWITTER_BEARER_TOKEN`
+- `REDIS_URL` - Railway Redis (public URL)
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`
+- `INSTAGRAM_REDIRECT_URI` - Production callback URL
+
+*Railway (Worker):*
+- `DATABASE_URL` - Supabase PostgreSQL
+- `REDIS_URL` - Railway Redis (can use internal URL)
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`
+
 ### Known Limitations
 
-1. **No Redis** - Job queue disabled; scheduling saves to DB but doesn't auto-execute
-2. **No Push Notifications** - Firebase not configured
-3. **No Email Notifications** - Resend not configured
-4. **No Cloudinary** - Images returned as base64, not uploaded
+1. **No Push Notifications** - Firebase not configured
+2. **No Email Notifications** - Resend not configured
+3. **Preview Generation Disabled on Vercel** - Playwright doesn't work in serverless (screenshots only generated by worker)
+4. **Single Worker Instance** - No horizontal scaling for worker
+
+### Completed Features
+
+- [x] Set up Redis for proper job queue
+- [x] Add Cloudinary for image storage
+- [x] Deploy to Vercel (frontend) + Railway (worker)
+- [x] Instagram OAuth and auto-posting
+- [x] Tweets pagination to save API credits
 
 ### Future Improvements
 
-- [ ] Set up Redis for proper job queue
 - [ ] Configure Firebase for push notifications
 - [ ] Configure Resend for email notifications
-- [ ] Add Cloudinary for image storage
-- [ ] Deploy to Vercel (frontend) + Railway (worker)
-- [ ] Add more theme options
+- [ ] Add more theme options (currently 5 themes)
 - [ ] Support for tweet threads
 - [ ] Support for tweets with media
+- [ ] Preview generation using Cloudinary transformations (instead of Playwright)
+- [ ] Horizontal worker scaling
 
 ---
 
@@ -303,4 +486,3 @@ MIT
 ## Author
 
 Tuhin Roy
-# Trigger deploy
