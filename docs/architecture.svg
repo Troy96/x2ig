@@ -1,0 +1,320 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 0 1400 1580" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity="0.1"/>
+    </filter>
+    <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+    <linearGradient id="workerGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#134e5e"/>
+      <stop offset="100%" stop-color="#71b280"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#495057"/>
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e8590c"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1971c2"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2f9e44"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c92a2a"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7048e8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect x="-100" y="0" width="1400" height="1580" fill="#fafafa" rx="0"/>
+
+  <!-- Title -->
+  <text x="600" y="45" text-anchor="middle" font-size="28" font-weight="700" fill="#1e1e1e">X2IG — High-Level Architecture</text>
+  <text x="600" y="72" text-anchor="middle" font-size="15" fill="#868e96">Tweet → Instagram Story/Post Automation Platform</text>
+
+  <!-- ==================== USER ==================== -->
+  <rect x="510" y="95" width="180" height="50" rx="25" fill="#f8f9fa" stroke="#495057" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="600" y="125" text-anchor="middle" font-size="14" font-weight="600" fill="#495057">User (Browser)</text>
+
+  <!-- Arrow: User → Frontend -->
+  <line x1="600" y1="145" x2="600" y2="175" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ==================== FRONTEND ==================== -->
+  <rect x="120" y="175" width="960" height="245" rx="12" fill="#e7f5ff" fill-opacity="0.5" stroke="#1971c2" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="120" y="175" width="960" height="30" rx="12" fill="#1971c2"/>
+  <rect x="120" y="192" width="960" height="13" fill="#1971c2"/>
+  <text x="140" y="196" font-size="13" font-weight="700" fill="white">FRONTEND — Next.js 14 + React 18 (Vercel)</text>
+
+  <!-- Pages row -->
+  <rect x="145" y="215" width="145" height="48" rx="8" fill="white" stroke="#339af0" stroke-width="1"/>
+  <text x="217" y="235" text-anchor="middle" font-size="12" font-weight="600" fill="#1971c2">/ Dashboard</text>
+  <text x="217" y="252" text-anchor="middle" font-size="10" fill="#868e96">TweetList + Search</text>
+
+  <rect x="305" y="215" width="145" height="48" rx="8" fill="white" stroke="#339af0" stroke-width="1"/>
+  <text x="377" y="235" text-anchor="middle" font-size="12" font-weight="600" fill="#1971c2">/scheduled</text>
+  <text x="377" y="252" text-anchor="middle" font-size="10" fill="#868e96">ScheduleModal + List</text>
+
+  <rect x="465" y="215" width="145" height="48" rx="8" fill="white" stroke="#339af0" stroke-width="1"/>
+  <text x="537" y="235" text-anchor="middle" font-size="12" font-weight="600" fill="#1971c2">/settings</text>
+  <text x="537" y="252" text-anchor="middle" font-size="10" fill="#868e96">IG Connect + Themes</text>
+
+  <rect x="625" y="215" width="145" height="48" rx="8" fill="white" stroke="#339af0" stroke-width="1"/>
+  <text x="697" y="235" text-anchor="middle" font-size="12" font-weight="600" fill="#1971c2">/notifications</text>
+  <text x="697" y="252" text-anchor="middle" font-size="10" fill="#868e96">History + Mark read</text>
+
+  <rect x="785" y="215" width="145" height="48" rx="8" fill="white" stroke="#339af0" stroke-width="1"/>
+  <text x="857" y="235" text-anchor="middle" font-size="12" font-weight="600" fill="#1971c2">/auth/signin</text>
+  <text x="857" y="252" text-anchor="middle" font-size="10" fill="#868e96">Twitter OAuth 2.0</text>
+
+  <!-- Auth bar -->
+  <rect x="145" y="275" width="440" height="35" rx="6" fill="#fff4e6" stroke="#e8590c" stroke-width="1"/>
+  <text x="365" y="297" text-anchor="middle" font-size="11" font-weight="600" fill="#e8590c">NextAuth.js — Twitter OAuth 2.0 (session + refresh tokens)</text>
+
+  <!-- Contexts bar -->
+  <rect x="600" y="275" width="460" height="35" rx="6" fill="#f3f0ff" stroke="#7048e8" stroke-width="1"/>
+  <text x="830" y="297" text-anchor="middle" font-size="11" font-weight="600" fill="#7048e8">React Contexts: StoryThemeContext (day→theme map) | ThemeContext (UI dark/light/warm)</text>
+
+  <!-- Themes bar -->
+  <rect x="145" y="320" width="915" height="35" rx="6" fill="#fff0f6" stroke="#c2255c" stroke-width="1"/>
+  <text x="602" y="342" text-anchor="middle" font-size="11" font-weight="600" fill="#c2255c">Screenshot Themes: Shiny Purple | Mango Juice | Ocean Breeze | Forest Glow | Sunset Vibes — 1080×1080 gradient cards</text>
+
+  <!-- Post types -->
+  <rect x="145" y="365" width="440" height="35" rx="6" fill="#d3f9d8" stroke="#2f9e44" stroke-width="1"/>
+  <text x="365" y="387" text-anchor="middle" font-size="11" font-weight="600" fill="#2f9e44">STORY → screenshot download (manual upload)  |  POST → auto-publish to IG</text>
+
+  <rect x="600" y="365" width="460" height="35" rx="6" fill="#d0ebff" stroke="#1971c2" stroke-width="1"/>
+  <text x="830" y="387" text-anchor="middle" font-size="11" font-weight="600" fill="#1971c2">BulkScheduleModal — schedule multiple tweets at once</text>
+
+  <!-- Arrow: Frontend → API -->
+  <line x1="600" y1="420" x2="600" y2="460" stroke="#495057" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="615" y="445" font-size="10" fill="#868e96">HTTP / fetch</text>
+
+  <!-- ==================== API LAYER ==================== -->
+  <rect x="120" y="460" width="960" height="190" rx="12" fill="#fff4e6" fill-opacity="0.4" stroke="#e8590c" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="120" y="460" width="960" height="30" rx="12" fill="#e8590c"/>
+  <rect x="120" y="477" width="960" height="13" fill="#e8590c"/>
+  <text x="140" y="481" font-size="13" font-weight="700" fill="white">API LAYER — Next.js API Routes (Vercel Serverless)</text>
+
+  <!-- API route boxes -->
+  <rect x="145" y="500" width="155" height="55" rx="8" fill="white" stroke="#e8590c" stroke-width="1"/>
+  <text x="222" y="520" text-anchor="middle" font-size="11" font-weight="600" fill="#e8590c">GET /api/tweets</text>
+  <text x="222" y="535" text-anchor="middle" font-size="10" fill="#868e96">Fetch + cache from X</text>
+  <text x="222" y="548" text-anchor="middle" font-size="10" fill="#868e96">Filter, paginate, search</text>
+
+  <rect x="315" y="500" width="155" height="55" rx="8" fill="white" stroke="#e8590c" stroke-width="1"/>
+  <text x="392" y="520" text-anchor="middle" font-size="11" font-weight="600" fill="#e8590c">/api/schedule</text>
+  <text x="392" y="535" text-anchor="middle" font-size="10" fill="#868e96">CRUD + retry + cancel</text>
+  <text x="392" y="548" text-anchor="middle" font-size="10" fill="#868e96">→ enqueues BullMQ job</text>
+
+  <rect x="485" y="500" width="155" height="55" rx="8" fill="white" stroke="#e8590c" stroke-width="1"/>
+  <text x="562" y="520" text-anchor="middle" font-size="11" font-weight="600" fill="#e8590c">POST /api/preview</text>
+  <text x="562" y="535" text-anchor="middle" font-size="10" fill="#868e96">Live screenshot preview</text>
+  <text x="562" y="548" text-anchor="middle" font-size="10" fill="#868e96">Returns base64 data URL</text>
+
+  <rect x="655" y="500" width="155" height="55" rx="8" fill="white" stroke="#e8590c" stroke-width="1"/>
+  <text x="732" y="520" text-anchor="middle" font-size="11" font-weight="600" fill="#e8590c">/api/instagram</text>
+  <text x="732" y="535" text-anchor="middle" font-size="10" fill="#868e96">OAuth + callback</text>
+  <text x="732" y="548" text-anchor="middle" font-size="10" fill="#868e96">Account connect/disconnect</text>
+
+  <rect x="825" y="500" width="235" height="55" rx="8" fill="white" stroke="#e8590c" stroke-width="1"/>
+  <text x="942" y="520" text-anchor="middle" font-size="11" font-weight="600" fill="#e8590c">/api/notifications + /api/fcm</text>
+  <text x="942" y="535" text-anchor="middle" font-size="10" fill="#868e96">List / mark-read / delete</text>
+  <text x="942" y="548" text-anchor="middle" font-size="10" fill="#868e96">Register push device tokens</text>
+
+  <!-- Core libs row -->
+  <text x="155" y="580" font-size="11" font-weight="600" fill="#e8590c">Core Libraries (src/lib/):</text>
+
+  <rect x="145" y="590" width="100" height="30" rx="5" fill="#d0ebff" stroke="#339af0" stroke-width="1"/>
+  <text x="195" y="610" text-anchor="middle" font-size="10" font-weight="600" font-family="'SF Mono', 'Fira Code', monospace" fill="#1971c2">twitter.ts</text>
+
+  <rect x="255" y="590" width="110" height="30" rx="5" fill="#ffd8e4" stroke="#c2255c" stroke-width="1"/>
+  <text x="310" y="610" text-anchor="middle" font-size="10" font-weight="600" font-family="'SF Mono', 'Fira Code', monospace" fill="#c2255c">screenshot.ts</text>
+
+  <rect x="375" y="590" width="110" height="30" rx="5" fill="#d3f9d8" stroke="#2f9e44" stroke-width="1"/>
+  <text x="430" y="610" text-anchor="middle" font-size="10" font-weight="600" font-family="'SF Mono', 'Fira Code', monospace" fill="#2f9e44">cloudinary.ts</text>
+
+  <rect x="495" y="590" width="105" height="30" rx="5" fill="#ffe8cc" stroke="#e8590c" stroke-width="1"/>
+  <text x="547" y="610" text-anchor="middle" font-size="10" font-weight="600" font-family="'SF Mono', 'Fira Code', monospace" fill="#e8590c">instagram.ts</text>
+
+  <rect x="610" y="590" width="85" height="30" rx="5" fill="#fff3bf" stroke="#f08c00" stroke-width="1"/>
+  <text x="652" y="610" text-anchor="middle" font-size="10" font-weight="600" font-family="'SF Mono', 'Fira Code', monospace" fill="#f08c00">queue.ts</text>
+
+  <rect x="705" y="590" width="120" height="30" rx="5" fill="#e5dbff" stroke="#7048e8" stroke-width="1"/>
+  <text x="765" y="610" text-anchor="middle" font-size="10" font-weight="600" font-family="'SF Mono', 'Fira Code', monospace" fill="#7048e8">notifications.ts</text>
+
+  <rect x="835" y="590" width="80" height="30" rx="5" fill="#e5dbff" stroke="#7048e8" stroke-width="1"/>
+  <text x="875" y="610" text-anchor="middle" font-size="10" font-weight="600" font-family="'SF Mono', 'Fira Code', monospace" fill="#7048e8">email.ts</text>
+
+  <rect x="925" y="590" width="80" height="30" rx="5" fill="#f8f9fa" stroke="#495057" stroke-width="1"/>
+  <text x="965" y="610" text-anchor="middle" font-size="10" font-weight="600" font-family="'SF Mono', 'Fira Code', monospace" fill="#495057">prisma.ts</text>
+
+  <!-- ==================== MIDDLE: Queue + DB ==================== -->
+
+  <!-- Arrow: API → Redis -->
+  <line x1="400" y1="650" x2="400" y2="700" stroke="#c92a2a" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text x="410" y="680" font-size="10" font-weight="600" fill="#c92a2a">addScreenshotJob()</text>
+
+  <!-- Arrow: API → DB -->
+  <line x1="800" y1="650" x2="800" y2="700" stroke="#1971c2" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="815" y="680" font-size="10" fill="#1971c2">Prisma queries</text>
+
+  <!-- Redis box -->
+  <rect x="260" y="700" width="280" height="70" rx="10" fill="#ffe3e3" stroke="#c92a2a" stroke-width="2" filter="url(#shadow)"/>
+  <text x="400" y="725" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">Redis</text>
+  <text x="400" y="743" text-anchor="middle" font-size="11" fill="#868e96">BullMQ Queue: "screenshot-jobs"</text>
+  <text x="400" y="758" text-anchor="middle" font-size="10" fill="#868e96">3 retries · exponential backoff · delayed execution</text>
+
+  <!-- DB box -->
+  <rect x="660" y="700" width="280" height="70" rx="10" fill="#d0ebff" stroke="#1971c2" stroke-width="2" filter="url(#shadow)"/>
+  <text x="800" y="722" text-anchor="middle" font-size="15" font-weight="700" fill="#1971c2">PostgreSQL (Supabase)</text>
+  <text x="800" y="740" text-anchor="middle" font-size="11" fill="#868e96">Prisma ORM · Session Pooler</text>
+  <text x="800" y="758" text-anchor="middle" font-size="10" fill="#868e96">Indexes: userId, scheduledFor, status</text>
+
+  <!-- DB Models box -->
+  <rect x="660" y="785" width="280" height="150" rx="8" fill="#e7f5ff" stroke="#74c0fc" stroke-width="1"/>
+  <text x="680" y="805" font-size="11" font-weight="600" fill="#1971c2">Models:</text>
+  <text x="680" y="822" font-size="10" fill="#495057">• User / Account / Session (NextAuth)</text>
+  <text x="680" y="837" font-size="10" fill="#495057">• Tweet (cached from X API)</text>
+  <text x="680" y="852" font-size="10" fill="#495057">• ScheduledPost (status, theme, type)</text>
+  <text x="680" y="867" font-size="10" fill="#495057">• InstagramAccount (long-lived token)</text>
+  <text x="680" y="882" font-size="10" fill="#495057">• FcmToken (push device tokens)</text>
+  <text x="680" y="897" font-size="10" fill="#495057">• Notification (in-app history)</text>
+  <text x="680" y="918" font-size="10" fill="#868e96">Enums: Theme(5) PostStatus(4) PostType(2)</text>
+
+  <!-- Arrow: Redis → Worker -->
+  <line x1="400" y1="770" x2="400" y2="830" stroke="#c92a2a" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text x="410" y="805" font-size="10" fill="#c92a2a">polls when delay elapsed</text>
+
+  <!-- ==================== WORKER ==================== -->
+  <rect x="120" y="830" width="520" height="260" rx="12" fill="#ebfbee" fill-opacity="0.5" stroke="#2f9e44" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="120" y="830" width="520" height="30" rx="12" fill="url(#workerGrad)"/>
+  <rect x="120" y="847" width="520" height="13" fill="url(#workerGrad)"/>
+  <text x="140" y="851" font-size="13" font-weight="700" fill="white">WORKER PROCESS — Railway (Docker) — Separate from Web App</text>
+
+  <!-- Worker info -->
+  <rect x="145" y="870" width="475" height="35" rx="6" fill="white" stroke="#2f9e44" stroke-width="1"/>
+  <text x="382" y="892" text-anchor="middle" font-size="11" font-weight="600" fill="#2f9e44">scheduler.ts — BullMQ Worker (concurrency: 2, rate limit: 5 jobs/min)</text>
+
+  <!-- Pipeline steps -->
+  <rect x="145" y="920" width="105" height="55" rx="8" fill="white" stroke="#1971c2" stroke-width="1.5"/>
+  <text x="197" y="940" text-anchor="middle" font-size="10" font-weight="700" fill="#1971c2">1. Capture</text>
+  <text x="197" y="955" text-anchor="middle" font-size="9" fill="#868e96">Playwright</text>
+  <text x="197" y="967" text-anchor="middle" font-size="9" fill="#868e96">1080×1080 @2x</text>
+
+  <line x1="250" y1="947" x2="270" y2="947" stroke="#2f9e44" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+  <rect x="270" y="920" width="105" height="55" rx="8" fill="white" stroke="#2f9e44" stroke-width="1.5"/>
+  <text x="322" y="940" text-anchor="middle" font-size="10" font-weight="700" fill="#2f9e44">2. Upload</text>
+  <text x="322" y="955" text-anchor="middle" font-size="9" fill="#868e96">Cloudinary CDN</text>
+  <text x="322" y="967" text-anchor="middle" font-size="9" fill="#868e96">get HTTPS URL</text>
+
+  <line x1="375" y1="947" x2="395" y2="947" stroke="#2f9e44" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+  <rect x="395" y="920" width="105" height="55" rx="8" fill="white" stroke="#e8590c" stroke-width="1.5"/>
+  <text x="447" y="940" text-anchor="middle" font-size="10" font-weight="700" fill="#e8590c">3. Publish</text>
+  <text x="447" y="955" text-anchor="middle" font-size="9" fill="#868e96">Instagram API</text>
+  <text x="447" y="967" text-anchor="middle" font-size="9" fill="#868e96">(if POST type)</text>
+
+  <line x1="500" y1="947" x2="520" y2="947" stroke="#2f9e44" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+  <rect x="520" y="920" width="100" height="55" rx="8" fill="white" stroke="#7048e8" stroke-width="1.5"/>
+  <text x="570" y="940" text-anchor="middle" font-size="10" font-weight="700" fill="#7048e8">4. Notify</text>
+  <text x="570" y="955" text-anchor="middle" font-size="9" fill="#868e96">FCM + Email</text>
+  <text x="570" y="967" text-anchor="middle" font-size="9" fill="#868e96">+ In-app DB</text>
+
+  <!-- Status flow -->
+  <text x="382" y="1000" text-anchor="middle" font-size="10" fill="#868e96">Status: PENDING → PROCESSING → COMPLETED  (or FAILED → retry up to 3×)</text>
+
+  <!-- Token refresh -->
+  <rect x="145" y="1015" width="475" height="32" rx="6" fill="#fff4e6" stroke="#e8590c" stroke-width="1"/>
+  <text x="382" y="1036" text-anchor="middle" font-size="11" font-weight="600" fill="#e8590c">tokenRefresh.ts — Daily cron: refreshes Instagram tokens expiring within 7 days</text>
+
+  <!-- Worker → DB arrow -->
+  <path d="M 640 950 Q 660 950 660 850 Q 660 790 660 770" stroke="#1971c2" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow-blue)"/>
+  <text x="648" y="860" font-size="9" fill="#1971c2" transform="rotate(-90 648 860)">read/write</text>
+
+  <!-- ==================== EXTERNAL SERVICES ==================== -->
+  <text x="-65" y="690" text-anchor="middle" font-size="13" font-weight="700" fill="#495057">EXTERNAL</text>
+  <text x="-65" y="706" text-anchor="middle" font-size="13" font-weight="700" fill="#495057">SERVICES</text>
+
+  <!-- Twitter -->
+  <rect x="-95" y="730" width="170" height="55" rx="8" fill="#d0ebff" stroke="#1971c2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="-10" y="750" text-anchor="middle" font-size="11" font-weight="700" fill="#1971c2">X / Twitter API v2</text>
+  <text x="-10" y="765" text-anchor="middle" font-size="9" fill="#868e96">Bearer Token · Fetch tweets</text>
+  <text x="-10" y="778" text-anchor="middle" font-size="9" fill="#868e96">Excl. retweets/replies</text>
+
+  <line x1="75" y1="757" x2="120" y2="640" stroke="#1971c2" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- Instagram -->
+  <rect x="-95" y="800" width="170" height="60" rx="8" fill="#ffe8cc" stroke="#e8590c" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="-10" y="820" text-anchor="middle" font-size="11" font-weight="700" fill="#e8590c">Instagram Graph API</text>
+  <text x="-10" y="835" text-anchor="middle" font-size="9" fill="#868e96">v21.0 · 3-step publish</text>
+  <text x="-10" y="848" text-anchor="middle" font-size="9" fill="#868e96">25 posts/24h · 60-day tokens</text>
+
+  <!-- Cloudinary -->
+  <rect x="-95" y="875" width="170" height="50" rx="8" fill="#d3f9d8" stroke="#2f9e44" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="-10" y="895" text-anchor="middle" font-size="11" font-weight="700" fill="#2f9e44">Cloudinary CDN</text>
+  <text x="-10" y="910" text-anchor="middle" font-size="9" fill="#868e96">Image upload · auto-optimize</text>
+  <text x="-10" y="922" text-anchor="middle" font-size="9" fill="#868e96">1080×1080 PNG</text>
+
+  <!-- Firebase -->
+  <rect x="-95" y="940" width="170" height="45" rx="8" fill="#e5dbff" stroke="#7048e8" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="-10" y="958" text-anchor="middle" font-size="11" font-weight="700" fill="#7048e8">Firebase FCM</text>
+  <text x="-10" y="973" text-anchor="middle" font-size="9" fill="#868e96">Push · Web + Mobile + Topics</text>
+
+  <!-- Resend -->
+  <rect x="-95" y="1000" width="170" height="45" rx="8" fill="#e5dbff" stroke="#7048e8" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="-10" y="1018" text-anchor="middle" font-size="11" font-weight="700" fill="#7048e8">Resend</text>
+  <text x="-10" y="1033" text-anchor="middle" font-size="9" fill="#868e96">Email notifications · HTML</text>
+
+  <!-- Dashed lines from external to worker -->
+  <line x1="75" y1="830" x2="145" y2="947" stroke="#e8590c" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="75" y1="900" x2="145" y2="947" stroke="#2f9e44" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="75" y1="962" x2="145" y2="960" stroke="#7048e8" stroke-width="1" stroke-dasharray="4 3"/>
+  <line x1="75" y1="1022" x2="145" y2="965" stroke="#7048e8" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- ==================== IG PUBLISH DETAIL ==================== -->
+  <rect x="660" y="955" width="280" height="115" rx="8" fill="#fff4e6" stroke="#e8590c" stroke-width="1"/>
+  <text x="680" y="975" font-size="11" font-weight="700" fill="#e8590c">Instagram 3-Step Publish:</text>
+  <text x="680" y="995" font-size="10" fill="#495057">1. createMediaContainer(imageUrl)</text>
+  <text x="680" y="1012" font-size="10" fill="#495057">2. waitForContainerReady()</text>
+  <text x="695" y="1027" font-size="9" fill="#868e96">→ poll up to 30× at 2s intervals</text>
+  <text x="680" y="1044" font-size="10" fill="#495057">3. publishMedia() → permalink</text>
+  <text x="680" y="1062" font-size="9" fill="#868e96">Rate: 25 posts/24h · ~200 API calls/h</text>
+
+  <!-- ==================== NOTIFICATION DETAIL ==================== -->
+  <rect x="660" y="1085" width="280" height="85" rx="8" fill="#f3f0ff" stroke="#7048e8" stroke-width="1"/>
+  <text x="680" y="1105" font-size="11" font-weight="700" fill="#7048e8">Multi-Channel Notifications:</text>
+  <text x="680" y="1125" font-size="10" fill="#495057">1. FCM Push — real-time with actions</text>
+  <text x="680" y="1142" font-size="10" fill="#495057">2. Email via Resend — HTML template</text>
+  <text x="680" y="1159" font-size="10" fill="#495057">3. In-app — DB record in /notifications</text>
+
+  <!-- ==================== DEPLOYMENT ==================== -->
+  <rect x="120" y="1120" width="520" height="130" rx="12" fill="#f8f9fa" stroke="#495057" stroke-width="2" filter="url(#shadow)"/>
+  <rect x="120" y="1120" width="520" height="28" rx="12" fill="#495057"/>
+  <rect x="120" y="1137" width="520" height="11" fill="#495057"/>
+  <text x="140" y="1140" font-size="13" font-weight="700" fill="white">DEPLOYMENT TOPOLOGY</text>
+
+  <text x="155" y="1170" font-size="12" fill="#495057"><tspan font-weight="600">Web App:</tspan>     Vercel (serverless Next.js)</text>
+  <text x="155" y="1188" font-size="12" fill="#495057"><tspan font-weight="600">Worker:</tspan>       Railway (Docker — Dockerfile.worker)</text>
+  <text x="155" y="1206" font-size="12" fill="#495057"><tspan font-weight="600">Database:</tspan>   Supabase PostgreSQL (session pooler)</text>
+  <text x="155" y="1224" font-size="12" fill="#495057"><tspan font-weight="600">Redis:</tspan>         Railway (managed)</text>
+  <text x="400" y="1170" font-size="12" fill="#495057"><tspan font-weight="600">Images:</tspan>    Cloudinary CDN</text>
+  <text x="400" y="1188" font-size="12" fill="#495057"><tspan font-weight="600">Notifs:</tspan>     Firebase + Resend (optional)</text>
+  <text x="400" y="1206" font-size="12" fill="#495057"><tspan font-weight="600">Auth:</tspan>        Twitter OAuth 2.0</text>
+  <text x="400" y="1224" font-size="12" fill="#495057"><tspan font-weight="600">ORM:</tspan>         Prisma 5</text>
+
+  <!-- ==================== SCREENSHOT DETAIL ==================== -->
+  <rect x="-95" y="1065" width="170" height="90" rx="8" fill="#fff0f6" stroke="#c2255c" stroke-width="1"/>
+  <text x="-10" y="1085" text-anchor="middle" font-size="11" font-weight="700" fill="#c2255c">Screenshot Engine</text>
+  <text x="-80" y="1103" font-size="9" fill="#495057">Playwright + custom HTML</text>
+  <text x="-80" y="1117" font-size="9" fill="#495057">1080×1080px @ 2x DPI</text>
+  <text x="-80" y="1131" font-size="9" fill="#495057">5 gradient themes</text>
+  <text x="-80" y="1145" font-size="9" fill="#495057">~500ms per capture</text>
+</svg>
