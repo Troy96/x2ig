@@ -37,6 +37,8 @@ export function TweetList() {
   const [tweets, setTweets] = useState<Tweet[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const [hasMoreOlder, setHasMoreOlder] = useState(false)
   const [filter, setFilter] = useState<FilterType>('unposted')
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
@@ -62,11 +64,31 @@ export function TweetList() {
       if (data.tweets) {
         setTweets(data.tweets)
       }
+      setHasMoreOlder(!!data.hasMoreOlder)
     } catch (error) {
       console.error('Error fetching tweets:', error)
     } finally {
       setLoading(false)
       setRefreshing(false)
+    }
+  }, [filter])
+
+  const loadOlderTweets = useCallback(async () => {
+    try {
+      setLoadingOlder(true)
+
+      const params = new URLSearchParams({ filter, loadOlder: 'true' })
+      const response = await fetch(`/api/tweets?${params}`)
+      const data = await response.json()
+
+      if (data.tweets) {
+        setTweets(data.tweets)
+      }
+      setHasMoreOlder(!!data.hasMoreOlder)
+    } catch (error) {
+      console.error('Error loading older tweets:', error)
+    } finally {
+      setLoadingOlder(false)
     }
   }, [filter])
 
@@ -279,17 +301,38 @@ export function TweetList() {
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredAndSortedTweets.map((tweet) => (
-            <TweetCard
-              key={tweet.id}
-              {...tweet}
-              isSelected={selectedIds.has(tweet.id)}
-              onSelect={handleSelect}
-              onSchedule={handleSchedule}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredAndSortedTweets.map((tweet) => (
+              <TweetCard
+                key={tweet.id}
+                {...tweet}
+                isSelected={selectedIds.has(tweet.id)}
+                onSelect={handleSelect}
+                onSchedule={handleSchedule}
+              />
+            ))}
+          </div>
+
+          {hasMoreOlder && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={loadOlderTweets}
+                disabled={loadingOlder}
+                className="flex items-center gap-2 px-6 py-2.5 bg-[var(--card)] border border-[var(--card-border)] rounded-lg text-sm font-medium hover:bg-[var(--card-border)] transition-colors disabled:opacity-50"
+              >
+                {loadingOlder ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load Older Tweets'
+                )}
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Modals */}

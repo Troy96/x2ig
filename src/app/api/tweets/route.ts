@@ -14,15 +14,16 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const refresh = searchParams.get('refresh') === 'true'
+    const loadOlder = searchParams.get('loadOlder') === 'true'
     const filter = searchParams.get('filter') || 'all' // all, posted, unposted
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const fetchCount = parseInt(searchParams.get('fetchCount') || '20', 10) // How many to fetch from Twitter
 
-    // Get user's X user ID
+    // Get user's X user ID and pagination cursor
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { xUserId: true },
+      select: { xUserId: true, twitterPaginationToken: true },
     })
 
     if (!user?.xUserId) {
@@ -32,14 +33,28 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Only fetch from Twitter if explicitly requested with refresh=true
-    // No more automatic refresh based on time
-    if (refresh) {
-      // Fetch tweets from X API (limited to fetchCount to save credits)
-      const freshTweets = await fetchUserTweets(user.xUserId, Math.min(fetchCount, 100))
+    // refresh=true: fetch latest tweets from the top of the timeline
+    // loadOlder=true: continue fetching older tweets using stored cursor
+    if (refresh || loadOlder) {
+      const paginationToken = loadOlder ? (user.twitterPaginationToken ?? undefined) : undefined
+
+      if (loadOlder && !paginationToken) {
+        return NextResponse.json(
+          { error: 'No more older tweets to fetch' },
+          { status: 400 }
+        )
+      }
+
+      const result = await fetchUserTweets(user.xUserId, Math.min(fetchCount, 100), paginationToken)
+
+      // Store the pagination cursor for next "load older" call
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { twitterPaginationToken: result.nextToken ?? null },
+      })
 
       // Upsert tweets to database
-      for (const tweet of freshTweets) {
+      for (const tweet of result.tweets) {
         await prisma.tweet.upsert({
           where: { tweetId: tweet.id },
           update: {
@@ -103,6 +118,12 @@ export async function GET(request: NextRequest) {
       isPosted: scheduledTweetIds.has(tweet.id),
     }))
 
+    // Re-fetch user to get the latest cursor state
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { twitterPaginationToken: true },
+    })
+
     return NextResponse.json({
       tweets: tweetsWithStatus,
       pagination: {
@@ -112,6 +133,7 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(totalCount / limit),
         hasMore: page * limit < totalCount,
       },
+      hasMoreOlder: !!updatedUser?.twitterPaginationToken,
     })
   } catch (error) {
     console.error('Error fetching tweets:', error)

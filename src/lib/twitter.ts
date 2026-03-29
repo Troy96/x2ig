@@ -35,13 +35,19 @@ export interface TweetData {
   }>
 }
 
+export interface FetchTweetsResult {
+  tweets: TweetData[]
+  nextToken: string | undefined
+}
+
 export async function fetchUserTweets(
   userId: string,
-  maxTweets: number = 200
-): Promise<TweetData[]> {
+  maxTweets: number = 200,
+  paginationToken?: string
+): Promise<FetchTweetsResult> {
   try {
     const allTweets: TweetData[] = []
-    let paginationToken: string | undefined = undefined
+    let currentToken: string | undefined = paginationToken
     const perPage = 100 // Max allowed by Twitter API
 
     // Paginate through tweets until we reach maxTweets or run out
@@ -53,10 +59,11 @@ export async function fetchUserTweets(
         expansions: ['author_id', 'attachments.media_keys'],
         'media.fields': ['url', 'preview_image_url', 'type'],
         exclude: ['retweets', 'replies'],
-        ...(paginationToken && { pagination_token: paginationToken }),
+        ...(currentToken && { pagination_token: currentToken }),
       })
 
       if (!tweets.data?.data?.length) {
+        currentToken = undefined
         break // No more tweets
       }
 
@@ -93,13 +100,13 @@ export async function fetchUserTweets(
       allTweets.push(...pageTweets)
 
       // Check if there's more pages
-      paginationToken = tweets.data.meta?.next_token
-      if (!paginationToken) {
+      currentToken = tweets.data.meta?.next_token
+      if (!currentToken) {
         break // No more pages
       }
     }
 
-    return allTweets
+    return { tweets: allTweets, nextToken: currentToken }
   } catch (error) {
     console.error('Error fetching tweets:', error)
     throw error
