@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const refresh = searchParams.get('refresh') === 'true'
     const loadOlder = searchParams.get('loadOlder') === 'true'
     const filter = searchParams.get('filter') || 'all' // all, posted, unposted
+    const search = searchParams.get('search') || ''
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const fetchCount = parseInt(searchParams.get('fetchCount') || '20', 10) // How many to fetch from Twitter
@@ -39,50 +40,58 @@ export async function GET(request: NextRequest) {
       const paginationToken = loadOlder ? (user.twitterPaginationToken ?? undefined) : undefined
 
       if (loadOlder && !paginationToken) {
-        return NextResponse.json(
-          { error: 'No more older tweets to fetch' },
-          { status: 400 }
-        )
-      }
+        // No cursor means we've reached the end — not an error, just no more tweets
+        // Fall through to return current DB data with hasMoreOlder: false
+      } else {
+        const result = await fetchUserTweets(user.xUserId, Math.min(fetchCount, 100), paginationToken)
 
-      const result = await fetchUserTweets(user.xUserId, Math.min(fetchCount, 100), paginationToken)
-
-      // Store the pagination cursor for next "load older" call
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { twitterPaginationToken: result.nextToken ?? null },
-      })
-
-      // Upsert tweets to database
-      for (const tweet of result.tweets) {
-        await prisma.tweet.upsert({
-          where: { tweetId: tweet.id },
-          update: {
-            text: tweet.text,
-            likeCount: tweet.public_metrics?.like_count || 0,
-            retweetCount: tweet.public_metrics?.retweet_count || 0,
-            replyCount: tweet.public_metrics?.reply_count || 0,
-            fetchedAt: new Date(),
-          },
-          create: {
-            tweetId: tweet.id,
-            userId: session.user.id,
-            text: tweet.text,
-            authorName: tweet.author.name,
-            authorUsername: tweet.author.username,
-            authorImage: tweet.author.profile_image_url,
-            mediaUrls: tweet.media?.map((m) => m.url || m.preview_image_url).filter(Boolean) as string[] || [],
-            likeCount: tweet.public_metrics?.like_count || 0,
-            retweetCount: tweet.public_metrics?.retweet_count || 0,
-            replyCount: tweet.public_metrics?.reply_count || 0,
-            createdAt: new Date(tweet.created_at),
-          },
+        // Store the pagination cursor for next "load older" call
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: { twitterPaginationToken: result.nextToken ?? null },
         })
+
+        // Upsert tweets to database
+        for (const tweet of result.tweets) {
+          await prisma.tweet.upsert({
+            where: { tweetId: tweet.id },
+            update: {
+              text: tweet.text,
+              likeCount: tweet.public_metrics?.like_count || 0,
+              retweetCount: tweet.public_metrics?.retweet_count || 0,
+              replyCount: tweet.public_metrics?.reply_count || 0,
+              fetchedAt: new Date(),
+            },
+            create: {
+              tweetId: tweet.id,
+              userId: session.user.id,
+              text: tweet.text,
+              authorName: tweet.author.name,
+              authorUsername: tweet.author.username,
+              authorImage: tweet.author.profile_image_url,
+              mediaUrls: tweet.media?.map((m) => m.url || m.preview_image_url).filter(Boolean) as string[] || [],
+              likeCount: tweet.public_metrics?.like_count || 0,
+              retweetCount: tweet.public_metrics?.retweet_count || 0,
+              replyCount: tweet.public_metrics?.reply_count || 0,
+              createdAt: new Date(tweet.created_at),
+            },
+          })
+        }
       }
     }
 
     // Build filter conditions
-    const whereCondition: Record<string, unknown> = { userId: session.user.id }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereCondition: Record<string, any> = { userId: session.user.id }
+
+    // Add search condition if provided
+    if (search.trim()) {
+      whereCondition.OR = [
+        { text: { contains: search, mode: 'insensitive' } },
+        { authorName: { contains: search, mode: 'insensitive' } },
+        { authorUsername: { contains: search, mode: 'insensitive' } },
+      ]
+    }
 
     // Get scheduled post statuses for filtering
     const scheduledPosts = await prisma.scheduledPost.findMany({

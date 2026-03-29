@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { RefreshCw, Calendar, ArrowUpDown, Heart, MessageCircle, Repeat2, Clock, Search, X } from 'lucide-react'
+import { RefreshCw, Calendar, ArrowUpDown, Heart, MessageCircle, Repeat2, Clock, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { TweetCard } from './TweetCard'
 import { ScheduleModal } from './ScheduleModal'
 import { BulkScheduleModal } from './BulkScheduleModal'
@@ -39,6 +39,9 @@ export function TweetList() {
   const [refreshing, setRefreshing] = useState(false)
   const [loadingOlder, setLoadingOlder] = useState(false)
   const [hasMoreOlder, setHasMoreOlder] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
   const [filter, setFilter] = useState<FilterType>('unposted')
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
@@ -47,22 +50,36 @@ export function TweetList() {
   const [scheduleModalTweet, setScheduleModalTweet] = useState<Tweet | null>(null)
   const [showBulkSchedule, setShowBulkSchedule] = useState(false)
 
-  const fetchTweets = useCallback(async (refresh = false) => {
+  const fetchTweets = useCallback(async (options: { refresh?: boolean; loadOlder?: boolean; targetPage?: number; search?: string } = {}) => {
+    const { refresh = false, loadOlder = false, targetPage = 1, search = searchQuery } = options
     try {
       if (refresh) {
         setRefreshing(true)
+      } else if (loadOlder) {
+        setLoadingOlder(true)
       } else {
         setLoading(true)
       }
 
-      const params = new URLSearchParams({ filter })
+      const params = new URLSearchParams({
+        filter,
+        page: String(targetPage),
+        limit: '20',
+      })
       if (refresh) params.set('refresh', 'true')
+      if (loadOlder) params.set('loadOlder', 'true')
+      if (search.trim()) params.set('search', search.trim())
 
       const response = await fetch(`/api/tweets?${params}`)
       const data = await response.json()
 
       if (data.tweets) {
         setTweets(data.tweets)
+      }
+      if (data.pagination) {
+        setPage(data.pagination.page)
+        setTotalPages(data.pagination.totalPages)
+        setTotalCount(data.pagination.totalCount)
       }
       setHasMoreOlder(!!data.hasMoreOlder)
     } catch (error) {
@@ -70,47 +87,27 @@ export function TweetList() {
     } finally {
       setLoading(false)
       setRefreshing(false)
-    }
-  }, [filter])
-
-  const loadOlderTweets = useCallback(async () => {
-    try {
-      setLoadingOlder(true)
-
-      const params = new URLSearchParams({ filter, loadOlder: 'true' })
-      const response = await fetch(`/api/tweets?${params}`)
-      const data = await response.json()
-
-      if (data.tweets) {
-        setTweets(data.tweets)
-      }
-      setHasMoreOlder(!!data.hasMoreOlder)
-    } catch (error) {
-      console.error('Error loading older tweets:', error)
-    } finally {
       setLoadingOlder(false)
     }
-  }, [filter])
+  }, [filter, searchQuery])
 
-  useEffect(() => {
-    fetchTweets()
-  }, [fetchTweets])
-
-  const filteredAndSortedTweets = useMemo(() => {
-    // First filter by search query
-    let filtered = tweets
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      filtered = tweets.filter(
-        (t) =>
-          t.text.toLowerCase().includes(query) ||
-          t.authorName.toLowerCase().includes(query) ||
-          t.authorUsername.toLowerCase().includes(query)
-      )
+  const goToPage = useCallback((targetPage: number) => {
+    if (targetPage >= 1 && targetPage <= totalPages) {
+      fetchTweets({ targetPage })
     }
+  }, [fetchTweets, totalPages])
 
-    // Then sort
-    const sorted = [...filtered].sort((a, b) => {
+  // Debounce search — fetch from server after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchTweets({ targetPage: 1 })
+    }, 300)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, searchQuery])
+
+  const sortedTweets = useMemo(() => {
+    const sorted = [...tweets].sort((a, b) => {
       let comparison = 0
       switch (sortField) {
         case 'date':
@@ -129,7 +126,7 @@ export function TweetList() {
       return sortOrder === 'desc' ? -comparison : comparison
     })
     return sorted
-  }, [tweets, sortField, sortOrder, searchQuery])
+  }, [tweets, sortField, sortOrder])
 
   const handleSortClick = (field: SortField) => {
     if (sortField === field) {
@@ -214,7 +211,7 @@ export function TweetList() {
           {(['all', 'unposted', 'posted'] as FilterType[]).map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => { setFilter(f); setPage(1) }}
               className={cn(
                 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                 filter === f
@@ -259,7 +256,7 @@ export function TweetList() {
         </div>
 
         <button
-          onClick={() => fetchTweets(true)}
+          onClick={() => fetchTweets({ refresh: true, targetPage: 1 })}
           disabled={refreshing}
           className="flex items-center gap-2 px-3 py-1.5 text-sm theme-muted hover:theme-fg transition-colors disabled:opacity-50"
         >
@@ -290,11 +287,11 @@ export function TweetList() {
       </div>
 
       {/* Tweet Grid */}
-      {filteredAndSortedTweets.length === 0 ? (
+      {sortedTweets.length === 0 ? (
         <div className="text-center py-12">
           <p className="theme-muted">No tweets found</p>
           <button
-            onClick={() => fetchTweets(true)}
+            onClick={() => fetchTweets({ refresh: true, targetPage: 1 })}
             className="mt-4 theme-accent-text hover:opacity-80"
           >
             Refresh to fetch tweets
@@ -303,7 +300,7 @@ export function TweetList() {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredAndSortedTweets.map((tweet) => (
+            {sortedTweets.map((tweet) => (
               <TweetCard
                 key={tweet.id}
                 {...tweet}
@@ -314,10 +311,60 @@ export function TweetList() {
             ))}
           </div>
 
-          {hasMoreOlder && (
-            <div className="flex justify-center mt-8">
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
               <button
-                onClick={loadOlderTweets}
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                className="p-2 rounded-lg border border-[var(--card-border)] bg-[var(--card)] hover:bg-[var(--card-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                .reduce<(number | 'ellipsis')[]>((acc, p, i, arr) => {
+                  if (i > 0 && p - (arr[i - 1]) > 1) acc.push('ellipsis')
+                  acc.push(p)
+                  return acc
+                }, [])
+                .map((item, i) =>
+                  item === 'ellipsis' ? (
+                    <span key={`ellipsis-${i}`} className="px-1 theme-muted">...</span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => goToPage(item)}
+                      className={cn(
+                        'w-9 h-9 rounded-lg text-sm font-medium transition-colors',
+                        page === item
+                          ? 'bg-[var(--accent)] text-white'
+                          : 'border border-[var(--card-border)] bg-[var(--card)] hover:bg-[var(--card-border)]'
+                      )}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
+
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className="p-2 rounded-lg border border-[var(--card-border)] bg-[var(--card)] hover:bg-[var(--card-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              <span className="ml-3 text-xs theme-muted">{totalCount} tweets</span>
+            </div>
+          )}
+
+          {/* Load Older from Twitter */}
+          {hasMoreOlder && page >= totalPages && (
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={() => fetchTweets({ loadOlder: true, targetPage: page })}
                 disabled={loadingOlder}
                 className="flex items-center gap-2 px-6 py-2.5 bg-[var(--card)] border border-[var(--card-border)] rounded-lg text-sm font-medium hover:bg-[var(--card-border)] transition-colors disabled:opacity-50"
               >
@@ -327,7 +374,7 @@ export function TweetList() {
                     Loading...
                   </>
                 ) : (
-                  'Load Older Tweets'
+                  'Load Older Tweets from X'
                 )}
               </button>
             </div>
