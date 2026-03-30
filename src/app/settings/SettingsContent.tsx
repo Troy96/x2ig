@@ -46,6 +46,8 @@ export default function SettingsContent() {
 
     if (instagramSuccess) {
       setInstagramMessage({ type: 'success', text: 'Instagram account connected successfully!' })
+      // Re-fetch account to get fresh state
+      fetchInstagramAccount()
       // Clean up URL
       window.history.replaceState({}, '', '/settings')
     } else if (instagramError) {
@@ -60,24 +62,24 @@ export default function SettingsContent() {
   }, [])
 
   // Fetch Instagram account status
-  useEffect(() => {
-    const fetchInstagramAccount = async () => {
-      try {
-        const response = await fetch('/api/instagram/account')
-        const data = await response.json()
-        if (data.account) {
-          setInstagramAccount(data.account)
-        }
-      } catch (error) {
-        console.error('Error fetching Instagram account:', error)
-      } finally {
-        setInstagramLoading(false)
-      }
+  const fetchInstagramAccount = async () => {
+    try {
+      setInstagramLoading(true)
+      const response = await fetch('/api/instagram/account')
+      const data = await response.json()
+      setInstagramAccount(data.account || null)
+    } catch (error) {
+      console.error('Error fetching Instagram account:', error)
+    } finally {
+      setInstagramLoading(false)
     }
+  }
 
+  useEffect(() => {
     if (session?.user?.id) {
       fetchInstagramAccount()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id])
 
   const connectInstagram = () => {
