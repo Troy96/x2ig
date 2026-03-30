@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, Calendar, ArrowUpDown, Heart, MessageCircle, Repeat2, Clock, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { TweetCard } from './TweetCard'
 import { ScheduleModal } from './ScheduleModal'
@@ -65,6 +65,8 @@ export function TweetList() {
         filter,
         page: String(targetPage),
         limit: '20',
+        sortField,
+        sortOrder,
       })
       if (refresh) params.set('refresh', 'true')
       if (loadOlder) params.set('loadOlder', 'true')
@@ -89,7 +91,7 @@ export function TweetList() {
       setRefreshing(false)
       setLoadingOlder(false)
     }
-  }, [filter, searchQuery])
+  }, [filter, searchQuery, sortField, sortOrder])
 
   const goToPage = useCallback((targetPage: number) => {
     if (targetPage < 1) return
@@ -110,28 +112,6 @@ export function TweetList() {
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, searchQuery])
-
-  const sortedTweets = useMemo(() => {
-    const sorted = [...tweets].sort((a, b) => {
-      let comparison = 0
-      switch (sortField) {
-        case 'date':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          break
-        case 'likes':
-          comparison = a.likeCount - b.likeCount
-          break
-        case 'retweets':
-          comparison = a.retweetCount - b.retweetCount
-          break
-        case 'replies':
-          comparison = a.replyCount - b.replyCount
-          break
-      }
-      return sortOrder === 'desc' ? -comparison : comparison
-    })
-    return sorted
-  }, [tweets, sortField, sortOrder])
 
   const handleSortClick = (field: SortField) => {
     if (sortField === field) {
@@ -292,7 +272,7 @@ export function TweetList() {
       </div>
 
       {/* Tweet Grid */}
-      {sortedTweets.length === 0 ? (
+      {tweets.length === 0 ? (
         <div className="text-center py-12">
           <p className="theme-muted">No tweets found</p>
           <button
@@ -305,7 +285,7 @@ export function TweetList() {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sortedTweets.map((tweet) => (
+            {tweets.map((tweet) => (
               <TweetCard
                 key={tweet.id}
                 {...tweet}

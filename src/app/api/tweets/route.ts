@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     const loadOlder = searchParams.get('loadOlder') === 'true'
     const filter = searchParams.get('filter') || 'all' // all, posted, unposted
     const search = searchParams.get('search') || ''
+    const sortField = searchParams.get('sortField') || 'date'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const fetchCount = parseInt(searchParams.get('fetchCount') || '20', 10) // How many to fetch from Twitter
@@ -114,10 +116,20 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(totalCount / limit) || 1
     const clampedPage = Math.min(page, totalPages)
 
+    // Build sort order
+    const sortFieldMap: Record<string, string> = {
+      date: 'createdAt',
+      likes: 'likeCount',
+      retweets: 'retweetCount',
+      replies: 'replyCount',
+    }
+    const orderByField = sortFieldMap[sortField] || 'createdAt'
+    const orderByDirection = sortOrder === 'asc' ? 'asc' : 'desc'
+
     // Fetch paginated tweets from database
     const tweets = await prisma.tweet.findMany({
       where: whereCondition,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { [orderByField]: orderByDirection },
       skip: (clampedPage - 1) * limit,
       take: limit,
     })
