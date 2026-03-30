@@ -44,9 +44,7 @@ A platform to amplify your X (Twitter) content - generate beautiful screenshots,
 
 ## Demo
 
-https://github.com/user-attachments/assets/walkthrough.mp4
-
-[View walkthrough video](docs/walkthrough.mp4)
+https://github.com/Troy96/x2ig/raw/main/docs/walkthrough.mp4
 
 > A walkthrough of the platform — fetching tweets, previewing themes, scheduling posts, and managing Instagram integration.
 
