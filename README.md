@@ -44,9 +44,11 @@ A platform to amplify your X (Twitter) content - generate beautiful screenshots,
 
 ## Demo
 
-https://github.com/Troy96/x2ig/raw/main/docs/walkthrough.mp4
+![X2IG Platform Preview](docs/preview.gif)
 
-> A walkthrough of the platform — fetching tweets, previewing themes, scheduling posts, and managing Instagram integration.
+> Browse tweets, filter & sort, and schedule posts to Instagram — all from one dashboard.
+>
+> [Watch full walkthrough video](docs/walkthrough.mp4)
 
 ## Getting Started
 
