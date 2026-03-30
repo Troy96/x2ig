@@ -111,12 +111,14 @@ export async function GET(request: NextRequest) {
 
     // Get total count for pagination
     const totalCount = await prisma.tweet.count({ where: whereCondition })
+    const totalPages = Math.ceil(totalCount / limit) || 1
+    const clampedPage = Math.min(page, totalPages)
 
     // Fetch paginated tweets from database
     const tweets = await prisma.tweet.findMany({
       where: whereCondition,
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
+      skip: (clampedPage - 1) * limit,
       take: limit,
     })
 
@@ -136,11 +138,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       tweets: tweetsWithStatus,
       pagination: {
-        page,
+        page: clampedPage,
         limit,
         totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-        hasMore: page * limit < totalCount,
+        totalPages,
+        hasMore: clampedPage * limit < totalCount,
       },
       hasMoreOlder: !!updatedUser?.twitterPaginationToken,
     })

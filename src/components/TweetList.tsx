@@ -92,10 +92,15 @@ export function TweetList() {
   }, [filter, searchQuery])
 
   const goToPage = useCallback((targetPage: number) => {
-    if (targetPage >= 1 && targetPage <= totalPages) {
+    if (targetPage < 1) return
+    if (targetPage <= totalPages) {
       fetchTweets({ targetPage })
+    } else if (hasMoreOlder) {
+      // Past the last page — fetch older tweets from Twitter
+      // The loadOlder flag fetches from X and returns the updated page
+      fetchTweets({ loadOlder: true, targetPage })
     }
-  }, [fetchTweets, totalPages])
+  }, [fetchTweets, totalPages, hasMoreOlder])
 
   // Debounce search — fetch from server after user stops typing
   useEffect(() => {
@@ -348,35 +353,26 @@ export function TweetList() {
                   )
                 )}
 
+              {hasMoreOlder && (
+                <span key="more-ellipsis" className="px-1 theme-muted">...</span>
+              )}
+
               <button
                 onClick={() => goToPage(page + 1)}
-                disabled={page >= totalPages}
-                className="p-2 rounded-lg border border-[var(--card-border)] bg-[var(--card)] hover:bg-[var(--card-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                disabled={page >= totalPages && !hasMoreOlder}
+                className={cn(
+                  'p-2 rounded-lg border border-[var(--card-border)] bg-[var(--card)] hover:bg-[var(--card-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
+                  loadingOlder && 'opacity-50 pointer-events-none'
+                )}
               >
-                <ChevronRight className="w-4 h-4" />
+                {loadingOlder ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
               </button>
 
               <span className="ml-3 text-xs theme-muted">{totalCount} tweets</span>
-            </div>
-          )}
-
-          {/* Load Older from Twitter */}
-          {hasMoreOlder && page >= totalPages && (
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={() => fetchTweets({ loadOlder: true, targetPage: page })}
-                disabled={loadingOlder}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[var(--card)] border border-[var(--card-border)] rounded-lg text-sm font-medium hover:bg-[var(--card-border)] transition-colors disabled:opacity-50"
-              >
-                {loadingOlder ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  'Load Older Tweets from X'
-                )}
-              </button>
             </div>
           )}
         </>
