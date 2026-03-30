@@ -121,18 +121,22 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Add job to queue
+      // Add job to queue (non-blocking — scheduling still works if Redis is down)
       const tweetUrl = `https://twitter.com/${tweet.authorUsername}/status/${tweet.tweetId}`
-      await addScreenshotJob(
-        {
-          scheduledPostId: post.id,
-          tweetId: tweet.id,
-          userId: session.user.id,
-          theme: selectedTheme,
-          tweetUrl,
-        },
-        scheduledDate
-      )
+      try {
+        await addScreenshotJob(
+          {
+            scheduledPostId: post.id,
+            tweetId: tweet.id,
+            userId: session.user.id,
+            theme: selectedTheme,
+            tweetUrl,
+          },
+          scheduledDate
+        )
+      } catch (queueError) {
+        console.warn(`Failed to enqueue job for post ${post.id} (Redis may be unavailable):`, queueError)
+      }
 
       createdPosts.push(post)
     }
@@ -186,7 +190,11 @@ export async function DELETE(request: NextRequest) {
 
     // Remove job from queue if pending
     if (post.status === 'PENDING') {
-      await removeScreenshotJob(post.id)
+      try {
+        await removeScreenshotJob(post.id)
+      } catch (queueError) {
+        console.warn(`Failed to remove job for post ${post.id} from queue:`, queueError)
+      }
     }
 
     // Delete from database (allow PENDING, COMPLETED, FAILED)
