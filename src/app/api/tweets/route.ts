@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { fetchUserTweets } from '@/lib/twitter'
+import { fetchXquikUserTweets } from '@/lib/xquik'
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,14 +23,29 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const fetchCount = parseInt(searchParams.get('fetchCount') || '20', 10) // How many to fetch from Twitter
+    const source = searchParams.get('source') || 'twitter'
 
     // Get user's X user ID and pagination cursor
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { xUserId: true, twitterPaginationToken: true },
+      select: { xUserId: true, xUsername: true, twitterPaginationToken: true },
     })
 
-    if (!user?.xUserId) {
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    if (source === 'xquik' && !user.xUsername) {
+      return NextResponse.json(
+        { error: 'X username not connected' },
+        { status: 400 }
+      )
+    }
+
+    if (source !== 'xquik' && !user.xUserId) {
       return NextResponse.json(
         { error: 'X account not connected' },
         { status: 400 }
@@ -45,13 +61,21 @@ export async function GET(request: NextRequest) {
         // No cursor means we've reached the end — not an error, just no more tweets
         // Fall through to return current DB data with hasMoreOlder: false
       } else {
-        const result = await fetchUserTweets(user.xUserId, Math.min(fetchCount, 100), paginationToken)
+        const xUserId = user.xUserId || ''
+        const result = source === 'xquik'
+          ? {
+              tweets: await fetchXquikUserTweets(user.xUsername || '', Math.min(fetchCount, 100)),
+              nextToken: undefined,
+            }
+          : await fetchUserTweets(xUserId, Math.min(fetchCount, 100), paginationToken)
 
         // Store the pagination cursor for next "load older" call
-        await prisma.user.update({
-          where: { id: session.user.id },
-          data: { twitterPaginationToken: result.nextToken ?? null },
-        })
+        if (source !== 'xquik') {
+          await prisma.user.update({
+            where: { id: session.user.id },
+            data: { twitterPaginationToken: result.nextToken ?? null },
+          })
+        }
 
         // Upsert tweets to database
         for (const tweet of result.tweets) {
