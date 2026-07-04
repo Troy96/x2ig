@@ -79,6 +79,9 @@ TWITTER_CLIENT_ID="your-client-id"
 TWITTER_CLIENT_SECRET="your-client-secret"
 TWITTER_BEARER_TOKEN="your-bearer-token"
 
+# Optional Xquik tweet refresh source
+XQUIK_API_KEY="your-xquik-api-key"
+
 # Redis (for job queue)
 REDIS_URL="redis://localhost:6379"                      # Local dev
 # REDIS_URL="redis://default:password@host:port"       # Production (Railway)
@@ -209,6 +212,16 @@ x2ig/
 | `/api/fcm` | POST | Register FCM token for push notifications |
 | `/api/fcm` | DELETE | Unregister FCM token |
 | `/api/health` | GET | Health check endpoint |
+
+### Optional Xquik Tweet Refresh
+
+Set `XQUIK_API_KEY` to let the tweet dashboard hydrate the same local tweet cache from Xquik search for the connected X username:
+
+```bash
+curl "http://localhost:3000/api/tweets?refresh=true&source=xquik&fetchCount=20"
+```
+
+The route calls `GET /api/v1/x/tweets/search` with the `x-api-key` header and a `from:<connected-username>` query. Default refreshes continue to use the existing Twitter/X client unless `source=xquik` is requested.
 
 ## Database Models
 
